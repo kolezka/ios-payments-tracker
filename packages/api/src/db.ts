@@ -1,7 +1,10 @@
 import { Database } from "bun:sqlite";
 import { join } from "path";
+import { logger } from "./logger";
 
-const dbPath = join(import.meta.dir, "..", "data", "data.db");
+const dbPath = process.env.DB_PATH ?? join(import.meta.dir, "..", "data", "data.db");
+logger.info({ dbPath }, "opening database");
+
 const db = new Database(dbPath, { create: true });
 
 db.run("PRAGMA journal_mode = WAL");
@@ -20,5 +23,7 @@ db.run(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
+
+logger.info("database initialized");
 
 export default db;

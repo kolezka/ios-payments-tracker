@@ -1,7 +1,7 @@
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions } from "./$types";
 
-const API_URL = process.env.API_URL ?? "http://localhost:3000";
+const API_URL = process.env.API_URL ?? "http://localhost:3010";
 
 export const actions: Actions = {
   login: async ({ request, cookies }) => {
@@ -24,8 +24,8 @@ export const actions: Actions = {
     cookies.set("session_token", token, {
       path: "/",
       httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      secure: true,
       maxAge: 60 * 60 * 24 * 365, // 1 year
     });
 

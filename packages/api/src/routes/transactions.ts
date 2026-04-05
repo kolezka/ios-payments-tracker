@@ -1,13 +1,30 @@
 import { Hono } from "hono";
 import db from "../db";
-import type { Transaction, CreateTransactionInput } from "../types";
+import { logger } from "../logger";
+import type { Transaction } from "../types";
 
 const transactions = new Hono();
 
 // POST /api/transactions — create
 // Accepts both standard fields {amount, merchant, ...} and iOS Shortcut fields {amount, seller, card, title}
 transactions.post("/", async (c) => {
-  const body = await c.req.json<Record<string, any>>();
+  let body: Record<string, any>;
+  try {
+    body = await c.req.json<Record<string, any>>();
+  } catch (e) {
+    const raw = await c.req.text();
+    logger.error({ raw, error: String(e) }, "failed to parse JSON body");
+    return c.json({ error: "Invalid JSON body" }, 400);
+  }
+
+  const contentType = c.req.header("Content-Type");
+  logger.info({ contentType, bodyKeys: Object.keys(body), body }, "incoming transaction");
+
+  const knownFields = ["amount", "merchant", "seller", "card", "card_last4", "title", "note", "category", "currency"];
+  const unknownFields = Object.keys(body).filter((k) => !knownFields.includes(k));
+  if (unknownFields.length > 0) {
+    logger.warn({ unknownFields }, "request contains unknown fields");
+  }
 
   // Map iOS Shortcut fields to internal fields
   const merchant = body.merchant ?? body.seller ?? null;
@@ -16,15 +33,34 @@ transactions.post("/", async (c) => {
 
   // Parse amount: iOS sends strings like "42,50 zł", "42.50", or "42,50"
   let amount: number;
-  if (typeof body.amount === "string") {
+  if (body.amount === undefined || body.amount === null) {
+    logger.warn("amount field is missing");
+    return c.json({ error: "amount and merchant (or seller) are required" }, 400);
+  } else if (typeof body.amount === "string") {
+    logger.debug({ rawAmount: body.amount, type: "string" }, "parsing string amount");
     // Strip currency symbols/letters and whitespace, normalize comma to dot
     const cleaned = body.amount.replace(/[^0-9.,-]/g, "").replace(",", ".");
     amount = parseFloat(cleaned);
+    if (isNaN(amount)) {
+      logger.warn({ rawAmount: body.amount, cleaned }, "could not parse amount string");
+    }
+  } else if (typeof body.amount === "number") {
+    amount = body.amount;
   } else {
+    logger.warn({ rawAmount: body.amount, type: typeof body.amount }, "unexpected amount type");
     amount = Number(body.amount);
   }
 
+  logger.info({ amount, merchant, note, card_last4, currency: body.currency ?? "PLN" }, "parsed transaction");
+
   if (!amount || isNaN(amount) || !merchant) {
+    logger.warn({
+      amount,
+      amountIsNaN: isNaN(amount),
+      merchant,
+      hasMerchant: !!body.merchant,
+      hasSeller: !!body.seller,
+    }, "validation failed");
     return c.json({ error: "amount and merchant (or seller) are required" }, 400);
   }
 
@@ -45,6 +81,8 @@ transactions.post("/", async (c) => {
   const created = db
     .prepare("SELECT * FROM transactions WHERE id = ?")
     .get(result.lastInsertRowid) as Transaction;
+
+  logger.info({ id: created.id, amount, merchant }, "transaction created");
 
   return c.json(created, 201);
 });
@@ -158,6 +196,7 @@ transactions.delete("/:id", (c) => {
     return c.json({ error: "Transaction not found" }, 404);
   }
   db.prepare("DELETE FROM transactions WHERE id = ?").run(id);
+  logger.info({ id }, "transaction deleted");
   return c.json({ success: true });
 });
 
