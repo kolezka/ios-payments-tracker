@@ -5,11 +5,27 @@ import type { Transaction, CreateTransactionInput } from "../types";
 const transactions = new Hono();
 
 // POST /api/transactions — create
+// Accepts both standard fields {amount, merchant, ...} and iOS Shortcut fields {amount, seller, card, title}
 transactions.post("/", async (c) => {
-  const body = await c.req.json<CreateTransactionInput>();
+  const body = await c.req.json<Record<string, any>>();
 
-  if (!body.amount || !body.merchant) {
-    return c.json({ error: "amount and merchant are required" }, 400);
+  // Map iOS Shortcut fields to internal fields
+  const merchant = body.merchant ?? body.seller ?? null;
+  const note = body.note ?? body.title ?? null;
+  const card_last4 = body.card_last4 ?? body.card ?? null;
+
+  // Parse amount: iOS sends strings like "42,50 zł", "42.50", or "42,50"
+  let amount: number;
+  if (typeof body.amount === "string") {
+    // Strip currency symbols/letters and whitespace, normalize comma to dot
+    const cleaned = body.amount.replace(/[^0-9.,-]/g, "").replace(",", ".");
+    amount = parseFloat(cleaned);
+  } else {
+    amount = Number(body.amount);
+  }
+
+  if (!amount || isNaN(amount) || !merchant) {
+    return c.json({ error: "amount and merchant (or seller) are required" }, 400);
   }
 
   const stmt = db.prepare(`
@@ -18,12 +34,12 @@ transactions.post("/", async (c) => {
   `);
 
   const result = stmt.run(
-    body.amount,
+    amount,
     body.currency ?? "PLN",
-    body.merchant,
+    merchant,
     body.category ?? null,
-    body.note ?? null,
-    body.card_last4 ?? null
+    note,
+    card_last4 ?? null
   );
 
   const created = db

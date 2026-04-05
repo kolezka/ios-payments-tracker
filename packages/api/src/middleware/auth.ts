@@ -7,11 +7,12 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   }
 
   const header = c.req.header("Authorization");
-  if (!header || !header.startsWith("Bearer ")) {
+  if (!header) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const token = header.slice(7);
+  // Accept both "Bearer <token>" and raw "<token>" (iOS Shortcuts sends raw)
+  const token = header.startsWith("Bearer ") ? header.slice(7) : header;
   if (token !== authToken) {
     return c.json({ error: "Unauthorized" }, 401);
   }
