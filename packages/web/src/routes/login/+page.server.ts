@@ -4,7 +4,7 @@ import type { Actions } from "./$types";
 const API_URL = process.env.API_URL ?? "http://localhost:3000";
 
 export const actions: Actions = {
-  default: async ({ request, cookies }) => {
+  login: async ({ request, cookies }) => {
     const data = await request.formData();
     const token = data.get("token") as string;
 

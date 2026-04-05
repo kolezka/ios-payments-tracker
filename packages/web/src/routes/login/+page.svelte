@@ -13,7 +13,7 @@
       <div class="error">{form.error}</div>
     {/if}
 
-    <form method="POST" use:enhance>
+    <form method="POST" action="?/login" use:enhance>
       <input
         type="password"
         name="token"
