@@ -1,4 +1,5 @@
 import { apiFetch } from "$lib/api";
+import { logger } from "$lib/logger";
 import type { PageServerLoad } from "./$types";
 
 const PAGE_SIZE = 25;
@@ -11,6 +12,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const offset = (page - 1) * PAGE_SIZE;
 
   const categories = categoryParam ? categoryParam.split(",") : [];
+
+  logger.debug({ page, from, to, categories, offset }, "dashboard load");
 
   // Build query string for API calls
   const filterParams = new URLSearchParams();
@@ -27,6 +30,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (from) unfilteredStatsParams.set("from", from);
   if (to) unfilteredStatsParams.set("to", to);
 
+  const start = Date.now();
   const [transactionsRes, statsRes, allCatsRes] = await Promise.all([
     apiFetch(`/api/transactions?${listParams}`, locals.authToken),
     apiFetch(`/api/transactions/stats?${filterParams}`, locals.authToken),
@@ -42,6 +46,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const availableCategories: string[] = (allCatsStats.spending_by_category ?? []).map(
     (c: { category: string }) => c.category
   );
+
+  logger.info({
+    transactionCount: transactions.length,
+    total,
+    totalPages,
+    availableCategories: availableCategories.length,
+    duration: `${Date.now() - start}ms`,
+  }, "dashboard data loaded");
 
   return {
     transactions,

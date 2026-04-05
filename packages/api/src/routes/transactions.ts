@@ -92,6 +92,8 @@ transactions.get("/stats", (c) => {
   const from = c.req.query("from");
   const to = c.req.query("to");
 
+  logger.debug({ from, to, category: c.req.query("category") }, "stats request");
+
   let dateFilter = "";
   const params: string[] = [];
   if (from) {
@@ -134,6 +136,13 @@ transactions.get("/stats", (c) => {
     )
     .all(...params) as { date: string; total: number }[];
 
+  logger.info({
+    transaction_count: summary.transaction_count,
+    total_spent: summary.total_spent,
+    categories: spendingByCategory.length,
+    topMerchant: topMerchants[0]?.merchant ?? null,
+  }, "stats computed");
+
   return c.json({
     total_spent: summary.total_spent,
     transaction_count: summary.transaction_count,
@@ -151,6 +160,8 @@ transactions.get("/", (c) => {
   const from = c.req.query("from");
   const to = c.req.query("to");
   const categoryParam = c.req.query("category");
+
+  logger.debug({ limit, offset, from, to, category: categoryParam }, "list transactions request");
 
   let dateFilter = "";
   const params: (string | number)[] = [];
@@ -185,6 +196,8 @@ transactions.get("/", (c) => {
     )
     .all(...params) as Transaction[];
 
+  logger.info({ total: totalRow.count, returned: rows.length, limit, offset }, "list transactions response");
+
   return c.json({ transactions: rows, total: totalRow.count });
 });
 
@@ -193,6 +206,7 @@ transactions.delete("/:id", (c) => {
   const id = parseInt(c.req.param("id"));
   const existing = db.prepare("SELECT id FROM transactions WHERE id = ?").get(id);
   if (!existing) {
+    logger.warn({ id }, "transaction not found for deletion");
     return c.json({ error: "Transaction not found" }, 404);
   }
   db.prepare("DELETE FROM transactions WHERE id = ?").run(id);

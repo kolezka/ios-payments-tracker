@@ -9,10 +9,13 @@ const app = new Hono();
 
 app.use(honoLogger((msg) => logger.info(msg)));
 
+const corsOrigin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
+logger.info({ corsOrigin }, "CORS configured");
+
 app.use(
   "/api/*",
   cors({
-    origin: process.env.WEB_ORIGIN ?? "http://localhost:5173",
+    origin: corsOrigin,
     credentials: true,
   })
 );
@@ -21,7 +24,10 @@ app.use("/api/*", authMiddleware);
 
 app.route("/api/transactions", transactions);
 
-app.get("/health", (c) => c.json({ status: "ok" }));
+app.get("/health", (c) => {
+  logger.debug("health check");
+  return c.json({ status: "ok" });
+});
 
 const port = parseInt(process.env.PORT ?? "3010");
 logger.info({ port }, "server starting");

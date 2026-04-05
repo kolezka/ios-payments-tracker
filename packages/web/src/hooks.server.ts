@@ -4,6 +4,10 @@ import { logger } from "$lib/logger";
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? "";
 const PUBLIC_PATHS = ["/login"];
 
+if (!AUTH_TOKEN) {
+  logger.error("AUTH_TOKEN is not set — all authenticated requests will fail");
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
   const start = Date.now();
   const { pathname, search } = event.url;
@@ -23,6 +27,8 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
 
   event.locals.authToken = token ?? "";
+
+  logger.debug({ pathname, isPublic, hasToken: !!token }, "request authenticated");
 
   const response = await resolve(event);
 

@@ -9,6 +9,7 @@ const db = new Database(dbPath, { create: true });
 
 db.run("PRAGMA journal_mode = WAL");
 db.run("PRAGMA foreign_keys = ON");
+logger.debug("database pragmas set (WAL mode, foreign keys ON)");
 
 db.run(`
   CREATE TABLE IF NOT EXISTS transactions (
