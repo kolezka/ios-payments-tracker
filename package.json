@@ -1,0 +1,10 @@
+{
+  "name": "payment-tracker",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "bun run dev:api & bun run dev:web",
+    "dev:api": "cd packages/api && bun --hot src/index.ts",
+    "dev:web": "cd packages/web && bun run dev"
+  }
+}

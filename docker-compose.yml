@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: ./packages/api
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_TOKEN=${AUTH_TOKEN}
+      - PORT=3000
+    volumes:
+      - api-data:/app/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./packages/web
+    ports:
+      - "3001:3000"
+    environment:
+      - API_URL=http://api:3000
+      - AUTH_TOKEN=${AUTH_TOKEN}
+      - PORT=3000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  api-data:

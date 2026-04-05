@@ -1,0 +1,10 @@
+{
+  "name": "@payment-tracker/api",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot src/index.ts"
+  },
+  "dependencies": {
+    "hono": "^4"
+  }
+}
