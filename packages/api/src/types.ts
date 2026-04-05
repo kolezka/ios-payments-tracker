@@ -9,12 +9,3 @@ export interface Transaction {
   timestamp: string;
   created_at: string;
 }
-
-export interface CreateTransactionInput {
-  amount: number;
-  currency?: string;
-  merchant: string;
-  category?: string;
-  note?: string;
-  card_last4?: string;
-}

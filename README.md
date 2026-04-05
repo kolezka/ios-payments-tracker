@@ -13,7 +13,7 @@ cp .env.example .env
 bun run dev
 ```
 
-API runs on http://localhost:3000, frontend on http://localhost:5173.
+API runs on http://localhost:3010, frontend on http://localhost:5173.
 
 ## Docker Deployment
 
@@ -23,25 +23,29 @@ cp .env.example .env
 docker compose up -d
 ```
 
-API: port 3000, Frontend: port 3001.
+API: port 3010, Frontend: port 3011.
+
+Logs are written to `./logs/api.log` (mounted from the api container).
 
 ## Apple Shortcut Setup
 
 1. Create a new Shortcut in the Shortcuts app
 2. Add action: **Get Contents of URL**
-   - URL: `https://your-domain.com/api/transactions`
+   - URL: `https://your-domain.com:3010/api/transactions`
    - Method: **POST**
    - Headers:
      - `Authorization`: `Bearer YOUR_TOKEN`
      - `Content-Type`: `application/json`
    - Request Body (JSON):
      - `amount`: Shortcut Input (transaction amount)
-     - `merchant`: Shortcut Input (merchant name)
+     - `seller`: Shortcut Input (merchant name)
+     - `card`: Shortcut Input (last 4 digits)
+     - `title`: Shortcut Input (note)
      - `currency`: `PLN`
 3. Go to **Automations** tab -> **New Automation**
 4. Select **Transaction** trigger (iOS 17.2+)
 5. Set it to run your shortcut
-6. iOS provides `amount` and `merchant` as input variables from the payment notification
+6. iOS provides `amount` and `seller` as input variables from the payment notification
 
 ## API Endpoints
 
@@ -50,7 +54,7 @@ All endpoints require `Authorization: Bearer <token>` header.
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/api/transactions` | Create transaction |
-| GET | `/api/transactions` | List transactions (?limit, ?offset, ?from, ?to) |
-| GET | `/api/transactions/stats` | Summary statistics (?from, ?to) |
+| GET | `/api/transactions` | List transactions (?limit, ?offset, ?from, ?to, ?category) |
+| GET | `/api/transactions/stats` | Summary statistics (?from, ?to, ?category) |
 | DELETE | `/api/transactions/:id` | Delete transaction |
 | GET | `/health` | Health check (no auth) |
