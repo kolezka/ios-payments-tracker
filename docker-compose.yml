@@ -7,6 +7,7 @@ services:
     environment:
       - AUTH_TOKEN=${AUTH_TOKEN}
       - PORT=3010
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
     volumes:
       - api-data:/app/data
       - ./logs:/app/logs
@@ -27,6 +28,9 @@ services:
       - API_URL=http://api:3010
       - AUTH_TOKEN=${AUTH_TOKEN}
       - PORT=3011
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       api:
         condition: service_healthy
