@@ -1,6 +1,8 @@
 <script>
   import TransactionList from "$lib/components/TransactionList.svelte";
   import Stats from "$lib/components/Stats.svelte";
+  import FilterBar from "$lib/components/FilterBar.svelte";
+  import Pagination from "$lib/components/Pagination.svelte";
 
   let { data } = $props();
 
@@ -9,6 +11,14 @@
       style: "currency",
       currency: "PLN",
     }).format(amount);
+  }
+
+  function baseParams() {
+    const params = new URLSearchParams();
+    if (data.filters.from) params.set("from", data.filters.from);
+    if (data.filters.to) params.set("to", data.filters.to);
+    if (data.filters.categories.length > 0) params.set("category", data.filters.categories.join(","));
+    return params.toString();
   }
 </script>
 
@@ -27,8 +37,12 @@
 
   <Stats stats={data.stats} />
 
+  <FilterBar filters={data.filters} availableCategories={data.availableCategories} />
+
   <h2>recent transactions</h2>
   <TransactionList transactions={data.transactions} />
+
+  <Pagination page={data.page} totalPages={data.totalPages} baseParams={baseParams()} />
 </div>
 
 <style>

@@ -49,27 +49,34 @@ transactions.get("/stats", (c) => {
     params.push(to + " 23:59:59");
   }
 
+  let categoryFilter = "";
+  if (c.req.query("category")) {
+    const categories = c.req.query("category")!.split(",").map((s) => s.trim());
+    categoryFilter = ` AND category IN (${categories.map(() => "?").join(",")})`;
+    params.push(...categories);
+  }
+
   const summary = db
     .prepare(
-      `SELECT COALESCE(SUM(amount), 0) as total_spent, COUNT(*) as transaction_count, COALESCE(AVG(amount), 0) as avg_transaction FROM transactions WHERE 1=1${dateFilter}`
+      `SELECT COALESCE(SUM(amount), 0) as total_spent, COUNT(*) as transaction_count, COALESCE(AVG(amount), 0) as avg_transaction FROM transactions WHERE 1=1${dateFilter}${categoryFilter}`
     )
     .get(...params) as { total_spent: number; transaction_count: number; avg_transaction: number };
 
   const topMerchants = db
     .prepare(
-      `SELECT merchant, COUNT(*) as count, SUM(amount) as total FROM transactions WHERE 1=1${dateFilter} GROUP BY merchant ORDER BY total DESC LIMIT 10`
+      `SELECT merchant, COUNT(*) as count, SUM(amount) as total FROM transactions WHERE 1=1${dateFilter}${categoryFilter} GROUP BY merchant ORDER BY total DESC LIMIT 10`
     )
     .all(...params) as { merchant: string; count: number; total: number }[];
 
   const spendingByCategory = db
     .prepare(
-      `SELECT COALESCE(category, 'uncategorized') as category, SUM(amount) as total FROM transactions WHERE 1=1${dateFilter} GROUP BY category ORDER BY total DESC`
+      `SELECT COALESCE(category, 'uncategorized') as category, SUM(amount) as total FROM transactions WHERE 1=1${dateFilter}${categoryFilter} GROUP BY category ORDER BY total DESC`
     )
     .all(...params) as { category: string; total: number }[];
 
   const dailySpending = db
     .prepare(
-      `SELECT DATE(timestamp) as date, SUM(amount) as total FROM transactions WHERE 1=1${dateFilter} GROUP BY DATE(timestamp) ORDER BY date DESC LIMIT 30`
+      `SELECT DATE(timestamp) as date, SUM(amount) as total FROM transactions WHERE 1=1${dateFilter}${categoryFilter} GROUP BY DATE(timestamp) ORDER BY date DESC LIMIT 30`
     )
     .all(...params) as { date: string; total: number }[];
 
@@ -85,10 +92,11 @@ transactions.get("/stats", (c) => {
 
 // GET /api/transactions — list
 transactions.get("/", (c) => {
-  const limit = parseInt(c.req.query("limit") ?? "50");
+  const limit = parseInt(c.req.query("limit") ?? "25");
   const offset = parseInt(c.req.query("offset") ?? "0");
   const from = c.req.query("from");
   const to = c.req.query("to");
+  const categoryParam = c.req.query("category");
 
   let dateFilter = "";
   const params: (string | number)[] = [];
@@ -101,15 +109,29 @@ transactions.get("/", (c) => {
     params.push(to + " 23:59:59");
   }
 
+  let categoryFilter = "";
+  if (categoryParam) {
+    const categories = categoryParam.split(",").map((s) => s.trim());
+    categoryFilter = ` AND category IN (${categories.map(() => "?").join(",")})`;
+    params.push(...categories);
+  }
+
+  const countParams = [...params];
+  const totalRow = db
+    .prepare(
+      `SELECT COUNT(*) as count FROM transactions WHERE 1=1${dateFilter}${categoryFilter}`
+    )
+    .get(...countParams) as { count: number };
+
   params.push(limit, offset);
 
   const rows = db
     .prepare(
-      `SELECT * FROM transactions WHERE 1=1${dateFilter} ORDER BY timestamp DESC LIMIT ? OFFSET ?`
+      `SELECT * FROM transactions WHERE 1=1${dateFilter}${categoryFilter} ORDER BY timestamp DESC LIMIT ? OFFSET ?`
     )
     .all(...params) as Transaction[];
 
-  return c.json(rows);
+  return c.json({ transactions: rows, total: totalRow.count });
 });
 
 // DELETE /api/transactions/:id
