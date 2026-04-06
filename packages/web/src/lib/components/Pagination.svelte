@@ -1,7 +1,7 @@
-<script>
-  let { page, totalPages, baseParams } = $props();
+<script lang="ts">
+  let { page, totalPages, baseParams }: { page: number; totalPages: number; baseParams: string } = $props();
 
-  function pageUrl(p) {
+  function pageUrl(p: number) {
     const params = new URLSearchParams(baseParams);
     if (p > 1) {
       params.set("page", String(p));

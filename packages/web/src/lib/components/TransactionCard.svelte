@@ -1,9 +1,9 @@
-<script>
+<script lang="ts">
   import { relativeTime } from "$lib/time";
 
-  let { transaction } = $props();
+  let { transaction }: { transaction: Record<string, any> } = $props();
 
-  function formatAmount(amount, currency) {
+  function formatAmount(amount: number, currency: string) {
     return new Intl.NumberFormat("pl-PL", {
       style: "currency",
       currency: currency || "PLN",

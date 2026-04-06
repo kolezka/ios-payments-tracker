@@ -1,6 +1,5 @@
-import { fail, redirect } from "@sveltejs/kit";
+import { fail, redirect, type Actions } from "@sveltejs/kit";
 import { logger } from "$lib/logger";
-import type { Actions } from "./$types";
 
 const API_URL = process.env.API_URL ?? "http://localhost:3010";
 

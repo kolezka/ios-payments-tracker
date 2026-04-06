@@ -1,7 +1,7 @@
-<script>
-  let { stats } = $props();
+<script lang="ts">
+  let { stats }: { stats: Record<string, any> } = $props();
 
-  function formatPLN(amount) {
+  function formatPLN(amount: number) {
     return new Intl.NumberFormat("pl-PL", {
       style: "currency",
       currency: "PLN",

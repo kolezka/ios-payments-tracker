@@ -1,10 +1,10 @@
+import type { ServerLoad } from "@sveltejs/kit";
 import { apiFetch } from "$lib/api";
 import { logger } from "$lib/logger";
-import type { PageServerLoad } from "./$types";
 
 const PAGE_SIZE = 25;
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: ServerLoad = async ({ locals, url }) => {
   const from = url.searchParams.get("from") ?? "";
   const to = url.searchParams.get("to") ?? "";
   const categoryParam = url.searchParams.get("category") ?? "";

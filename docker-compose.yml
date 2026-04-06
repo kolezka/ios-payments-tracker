@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "bun", "--eval", "fetch('http://localhost:3010/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
-      interval: 10s
+      interval: 3m
       timeout: 5s
       retries: 3
       start_period: 15s
@@ -37,7 +37,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "bun", "--eval", "fetch('http://localhost:3011').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
-      interval: 10s
+      interval: 3m
       timeout: 5s
       retries: 3
       start_period: 15s

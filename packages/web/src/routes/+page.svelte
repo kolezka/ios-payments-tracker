@@ -1,12 +1,12 @@
-<script>
+<script lang="ts">
   import TransactionList from "$lib/components/TransactionList.svelte";
   import Stats from "$lib/components/Stats.svelte";
   import FilterBar from "$lib/components/FilterBar.svelte";
   import Pagination from "$lib/components/Pagination.svelte";
 
-  let { data } = $props();
+  let { data }: { data: any } = $props();
 
-  function formatPLN(amount) {
+  function formatPLN(amount: number) {
     return new Intl.NumberFormat("pl-PL", {
       style: "currency",
       currency: "PLN",

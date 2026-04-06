@@ -1,13 +1,25 @@
-<script>
+<script lang="ts">
   import { goto } from "$app/navigation";
 
-  let { filters, availableCategories } = $props();
+  interface Preset {
+    label: string;
+    from: () => string;
+    to: () => string;
+  }
+
+  interface Filters {
+    from: string;
+    to: string;
+    categories: string[];
+  }
+
+  let { filters, availableCategories }: { filters: Filters; availableCategories: string[] } = $props();
 
   function today() {
     return new Date().toISOString().slice(0, 10);
   }
 
-  function daysAgo(n) {
+  function daysAgo(n: number) {
     const d = new Date();
     d.setDate(d.getDate() - n);
     return d.toISOString().slice(0, 10);
@@ -37,7 +49,7 @@
     return null;
   }
 
-  function applyFilters(newFilters) {
+  function applyFilters(newFilters: Filters) {
     const params = new URLSearchParams();
     if (newFilters.from) params.set("from", newFilters.from);
     if (newFilters.to) params.set("to", newFilters.to);
@@ -46,12 +58,12 @@
     goto(`/${qs ? "?" + qs : ""}`, { replaceState: true });
   }
 
-  function selectPreset(preset) {
+  function selectPreset(preset: Preset) {
     applyFilters({ from: preset.from(), to: preset.to(), categories: filters.categories });
   }
 
-  function onDateChange(e, field) {
-    const val = e.target.value;
+  function onDateChange(e: Event, field: string) {
+    const val = (e.target as HTMLInputElement).value;
     applyFilters({
       from: field === "from" ? val : filters.from,
       to: field === "to" ? val : filters.to,
@@ -59,9 +71,9 @@
     });
   }
 
-  function toggleCategory(cat) {
+  function toggleCategory(cat: string) {
     const cats = filters.categories.includes(cat)
-      ? filters.categories.filter((c) => c !== cat)
+      ? filters.categories.filter((c: string) => c !== cat)
       : [...filters.categories, cat];
     applyFilters({ from: filters.from, to: filters.to, categories: cats });
   }
