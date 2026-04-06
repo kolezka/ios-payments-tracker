@@ -31,7 +31,7 @@
         </button>
 
         {#if dropdownOpen}
-          <div class="absolute right-0 top-11 glass-strong min-w-[180px] py-1.5 z-50">
+          <div class="absolute right-0 top-11 glass-strong min-w-[180px] py-1.5 z-50 rounded-xl overflow-hidden">
             <div class="px-4 py-2 border-b border-glass-border">
               <div class="text-sm text-text-primary font-medium truncate">{user.name || 'User'}</div>
               <div class="text-xs text-text-dim truncate">{user.email}</div>

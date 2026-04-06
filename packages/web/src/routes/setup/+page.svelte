@@ -11,16 +11,16 @@
 
 <div class="fixed inset-0 bg-ambient -z-10"></div>
 
-<div class="max-w-2xl mx-auto px-5 py-12">
+<div class="max-w-2xl mx-auto px-5 pt-20 pb-12">
   <h1 class="text-2xl font-bold text-text-primary tracking-tight mb-1">Setup Apple Shortcut</h1>
   <p class="text-sm text-text-secondary mb-8">Connect your iPhone to start tracking payments</p>
 
-  <div class="glass-strong p-6 mb-4">
+  <div class="glass-strong p-5 mb-4">
     <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Your API Endpoint</h2>
     <div class="mb-3">
       <label class="text-xs text-text-dim mb-1 block">URL</label>
       <div class="flex gap-2">
-        <code class="flex-1 px-3 py-2 rounded-lg bg-black/30 border border-glass-border text-text-secondary text-xs font-mono truncate">{data.apiEndpoint}</code>
+        <code class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-black/30 border border-glass-border text-text-secondary text-xs font-mono truncate">{data.apiEndpoint}</code>
         <button onclick={() => copyToClipboard(data.apiEndpoint, 'url')}
           class="px-3 py-2 rounded-lg bg-glass-bg border border-glass-border text-text-secondary text-xs hover:text-accent hover:border-accent/30 transition-colors cursor-pointer shrink-0">
           {copiedField === 'url' ? 'Copied!' : 'Copy'}
@@ -30,7 +30,7 @@
     <div>
       <label class="text-xs text-text-dim mb-1 block">API Token</label>
       <div class="flex gap-2">
-        <code class="flex-1 px-3 py-2 rounded-lg bg-black/30 border border-glass-border text-text-secondary text-xs font-mono truncate">{data.token}</code>
+        <code class="flex-1 min-w-0 px-3 py-2 rounded-lg bg-black/30 border border-glass-border text-text-secondary text-xs font-mono truncate">{data.token}</code>
         <button onclick={() => copyToClipboard(data.token, 'token')}
           class="px-3 py-2 rounded-lg bg-glass-bg border border-glass-border text-text-secondary text-xs hover:text-accent hover:border-accent/30 transition-colors cursor-pointer shrink-0">
           {copiedField === 'token' ? 'Copied!' : 'Copy'}
@@ -39,7 +39,7 @@
     </div>
   </div>
 
-  <div class="glass p-6 mb-4">
+  <div class="glass p-5 mb-4">
     <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">1. Enable Private Sharing</h2>
     <p class="text-sm text-text-secondary mb-3">Required one-time step to allow installing custom shortcuts:</p>
     <ol class="text-sm text-text-secondary space-y-1 mb-3 list-decimal list-inside">
@@ -49,7 +49,7 @@
     </ol>
   </div>
 
-  <div class="glass p-6 mb-4">
+  <div class="glass p-5 mb-4">
     <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">2. Install Shortcut</h2>
     <p class="text-sm text-text-secondary mb-4">Automation for Wallet card tap. Automatically captures amount, merchant, and card name — no input needed.</p>
     <a href={data.downloadUrl}
@@ -59,7 +59,7 @@
     <p class="text-xs text-text-dim mt-3 text-center">Open the downloaded file to add it to Shortcuts</p>
   </div>
 
-  <div class="glass p-6">
+  <div class="glass p-5">
     <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">QR Code</h2>
     <div class="flex justify-center">
       <div class="w-40 h-40">
