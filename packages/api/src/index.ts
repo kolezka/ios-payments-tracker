@@ -4,6 +4,8 @@ import { logger as honoLogger } from "hono/logger";
 import { logger } from "./logger";
 import { authMiddleware } from "./middleware/auth";
 import transactions from "./routes/transactions";
+import auth from "./routes/auth";
+import shortcut from "./routes/shortcut";
 
 const app = new Hono();
 
@@ -20,9 +22,16 @@ app.use(
   })
 );
 
-app.use("/api/*", authMiddleware);
+// Public routes (no auth)
+app.route("/api/auth", auth);
 
+// Protected routes
+app.use("/api/transactions/*", authMiddleware);
+app.use("/api/transactions", authMiddleware);
 app.route("/api/transactions", transactions);
+
+app.use("/api/shortcut/*", authMiddleware);
+app.route("/api/shortcut", shortcut);
 
 app.get("/health", (c) => {
   logger.debug("health check");
