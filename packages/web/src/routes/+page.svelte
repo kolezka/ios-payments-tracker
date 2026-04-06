@@ -25,7 +25,7 @@
       <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
     </div>
 
-    <FilterBar filters={data.filters} />
+    <FilterBar filters={data.filters} exportBaseUrl={data.exportBaseUrl} />
 
     {#if data.dayGroups.length === 0}
       <div class="text-center py-12 text-text-muted text-sm">No transactions yet</div>

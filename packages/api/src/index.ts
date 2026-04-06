@@ -6,6 +6,7 @@ import { authMiddleware } from "./middleware/auth";
 import transactions from "./routes/transactions";
 import auth from "./routes/auth";
 import shortcut from "./routes/shortcut";
+import webhooks from "./routes/webhooks";
 
 const app = new Hono();
 
@@ -34,6 +35,10 @@ app.route("/api/transactions", transactions);
 app.use("/api/shortcut/*", authMiddleware);
 app.use("/api/shortcut", authMiddleware);
 app.route("/api/shortcut", shortcut);
+
+app.use("/api/webhooks/*", authMiddleware);
+app.use("/api/webhooks", authMiddleware);
+app.route("/api/webhooks", webhooks);
 
 app.get("/health", (c) => {
   logger.debug("health check");

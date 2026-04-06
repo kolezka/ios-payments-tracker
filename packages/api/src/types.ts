@@ -25,3 +25,13 @@ export interface Transaction {
   timestamp: string;
   created_at: string;
 }
+
+export interface Webhook {
+  id: number;
+  user_id: number;
+  url: string;
+  events: string;
+  secret: string | null;
+  active: number;
+  created_at: string;
+}

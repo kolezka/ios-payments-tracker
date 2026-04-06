@@ -46,6 +46,18 @@ db.run(`
   )
 `);
 
+db.run(`
+  CREATE TABLE IF NOT EXISTS webhooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    url TEXT NOT NULL,
+    events TEXT NOT NULL DEFAULT 'transaction.created',
+    secret TEXT,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
 logger.info("database initialized");
 
 export default db;

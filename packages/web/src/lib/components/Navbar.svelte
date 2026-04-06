@@ -39,6 +39,9 @@
             <a href="/setup" class="block px-4 py-2 text-sm text-text-secondary hover:text-accent hover:bg-white/5 transition-colors">
               Shortcut Setup
             </a>
+            <a href="/settings" class="block px-4 py-2 text-sm text-text-secondary hover:text-accent hover:bg-white/5 transition-colors">
+              Settings
+            </a>
             <form method="POST" action="/login?/logout" use:enhance>
               <button type="submit" class="w-full text-left px-4 py-2 text-sm text-text-secondary hover:text-red-300 hover:bg-white/5 transition-colors cursor-pointer">
                 Logout

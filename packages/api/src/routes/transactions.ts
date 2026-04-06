@@ -8,6 +8,7 @@ import {
   statsQuerySchema,
   idParamSchema,
 } from "../schemas";
+import { fireWebhooks } from "../webhooks";
 
 const transactions = new Hono();
 
@@ -46,6 +47,7 @@ transactions.post("/", async (c) => {
     .get(insertResult.lastInsertRowid) as Transaction;
 
   logger.info({ id: created.id, amount, seller, userId }, "transaction created");
+  fireWebhooks(userId, "transaction.created", { transaction: created });
   return c.json(created, 201);
 });
 
@@ -147,6 +149,57 @@ transactions.get("/", (c) => {
   return c.json({ transactions: rows, total: totalRow.count });
 });
 
+transactions.get("/export", (c) => {
+  const userId = c.get("userId") as number;
+  const format = c.req.query("format") ?? "csv";
+  const from = c.req.query("from");
+  const to = c.req.query("to");
+
+  let dateFilter = "";
+  const params: (string | number)[] = [userId];
+  if (from) {
+    dateFilter += " AND timestamp >= ?";
+    params.push(from);
+  }
+  if (to) {
+    dateFilter += " AND timestamp <= ?";
+    params.push(to + " 23:59:59");
+  }
+
+  const rows = db.prepare(
+    `SELECT * FROM transactions WHERE user_id = ?${dateFilter} ORDER BY timestamp DESC`
+  ).all(...params) as Transaction[];
+
+  logger.info({ format, count: rows.length, userId }, "export transactions");
+
+  if (format === "json") {
+    return new Response(JSON.stringify(rows, null, 2), {
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Disposition": 'attachment; filename="transactions.json"',
+      },
+    });
+  }
+
+  const header = "id,amount,seller,card,title,timestamp";
+  const csvRows = rows.map((r) => {
+    const escape = (v: string | null) => {
+      if (v == null) return "";
+      if (v.includes(",") || v.includes('"') || v.includes("\n")) return `"${v.replace(/"/g, '""')}"`;
+      return v;
+    };
+    return `${r.id},${r.amount},${escape(r.seller)},${escape(r.card)},${escape(r.title)},${r.timestamp}`;
+  });
+  const csv = [header, ...csvRows].join("\n");
+
+  return new Response(csv, {
+    headers: {
+      "Content-Type": "text/csv",
+      "Content-Disposition": 'attachment; filename="transactions.csv"',
+    },
+  });
+});
+
 transactions.delete("/:id", (c) => {
   const userId = c.get("userId") as number;
   const result = idParamSchema.safeParse({ id: c.req.param("id") });
@@ -160,8 +213,10 @@ transactions.delete("/:id", (c) => {
     logger.warn({ id, userId }, "transaction not found for deletion");
     return c.json({ error: "Transaction not found" }, 404);
   }
+  const toDelete = db.prepare("SELECT * FROM transactions WHERE id = ? AND user_id = ?").get(id, userId) as Transaction;
   db.prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?").run(id, userId);
   logger.info({ id, userId }, "transaction deleted");
+  fireWebhooks(userId, "transaction.deleted", { transaction: toDelete });
   return c.json({ success: true });
 });
 
