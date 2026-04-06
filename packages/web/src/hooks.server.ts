@@ -1,7 +1,7 @@
 import { redirect, type Handle } from "@sveltejs/kit";
 import { logger } from "$lib/logger";
 
-const PUBLIC_PATHS = ["/login", "/auth/verify", "/auth/github/callback"];
+const PUBLIC_PATHS = ["/", "/login", "/auth/verify", "/auth/github/callback"];
 const DEV_MODE = process.env.DEV_MODE === "true";
 logger.info({ DEV_MODE }, "hooks loaded");
 

@@ -5,6 +5,10 @@ import { logger } from "$lib/logger";
 const PAGE_SIZE = 25;
 
 export const load: ServerLoad = async ({ locals, url }) => {
+  if (!locals.authToken) {
+    return { authenticated: false };
+  }
+
   const from = url.searchParams.get("from") ?? "";
   const to = url.searchParams.get("to") ?? "";
   const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1"));
@@ -50,6 +54,7 @@ export const load: ServerLoad = async ({ locals, url }) => {
   }
 
   return {
+    authenticated: true,
     dayGroups,
     stats,
     page,
