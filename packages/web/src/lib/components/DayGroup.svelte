@@ -25,7 +25,7 @@
     return `${dayName} — ${monthDay}`;
   }
 
-  const dayTotal = transactions.reduce((sum, t) => sum + t.amount, 0);
+  let dayTotal = $derived(transactions.reduce((sum: number, t: Record<string, any>) => sum + t.amount, 0));
 </script>
 
 <div class="mb-2">
