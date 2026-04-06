@@ -11,3 +11,5 @@ data/*.db-wal
 .playwright-mcp/
 *.png
 logs/
+.worktrees/
+.superpowers/
