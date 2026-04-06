@@ -31,3 +31,15 @@ export const statsQuerySchema = z.object({
 export const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
+
+export const magicLinkSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export const verifyTokenSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+});
+
+export const updateNameSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+});
