@@ -1,7 +1,11 @@
-import { fail, redirect, type Actions } from "@sveltejs/kit";
+import { fail, redirect, type Actions, type ServerLoad } from "@sveltejs/kit";
 import { logger } from "$lib/logger";
 
 const API_URL = process.env.API_URL ?? "http://localhost:3010";
+
+export const load: ServerLoad = async () => {
+  return { githubEnabled: process.env.ENABLE_GITHUB_LOGIN === "true" };
+};
 
 export const actions: Actions = {
   "magic-link": async ({ request }) => {
