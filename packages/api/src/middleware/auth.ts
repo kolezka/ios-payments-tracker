@@ -39,7 +39,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
 
   const user = db.prepare("SELECT * FROM users WHERE api_token = ?").get(token) as User | null;
   if (!user) {
-    logger.warn({ path: c.req.path, isBearerFormat, tokenLength: token.length }, "invalid auth token");
+    logger.warn({ path: c.req.path, tokenLength: token.length }, "invalid auth token");
     return c.json({ error: "Unauthorized" }, 401);
   }
 

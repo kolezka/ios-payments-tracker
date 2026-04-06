@@ -1,278 +1,116 @@
 import { Hono } from "hono";
+import bplistCreator from "bplist-creator";
 import { logger } from "../logger";
 import type { User } from "../types";
 
 const shortcut = new Hono();
 
-function generateShortcutPlist(apiUrl: string, token: string): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>WFWorkflowMinimumClientVersion</key>
-  <string>900</string>
-  <key>WFWorkflowMinimumClientVersionString</key>
-  <string>900</string>
-  <key>WFWorkflowImportQuestions</key>
-  <array/>
-  <key>WFWorkflowTypes</key>
-  <array>
-    <string>WatchKit</string>
-    <string>NCWidget</string>
-  </array>
-  <key>WFWorkflowInputContentItemClasses</key>
-  <array/>
-  <key>WFWorkflowIcon</key>
-  <dict>
-    <key>WFWorkflowIconStartColor</key>
-    <integer>4274264319</integer>
-    <key>WFWorkflowIconGlyphNumber</key>
-    <integer>59470</integer>
-  </dict>
-  <key>WFWorkflowName</key>
-  <string>Dodaj Platnosc</string>
-  <key>WFWorkflowActions</key>
-  <array>
-    <!-- Build JSON from Wallet automation magic variables -->
-    <dict>
-      <key>WFWorkflowActionIdentifier</key>
-      <string>is.workflow.actions.dictionary</string>
-      <key>WFWorkflowActionParameters</key>
-      <dict>
-        <key>WFItems</key>
-        <dict>
-          <key>Value</key>
-          <dict>
-            <key>WFDictionaryFieldValueItems</key>
-            <array>
-              <!-- amount from Wallet Amount -->
-              <dict>
-                <key>WFItemType</key>
-                <integer>0</integer>
-                <key>WFKey</key>
-                <dict>
-                  <key>Value</key>
-                  <dict><key>string</key><string>amount</string></dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-                <key>WFValue</key>
-                <dict>
-                  <key>Value</key>
-                  <dict>
-                    <key>string</key>
-                    <string>\uFFFC</string>
-                    <key>attachmentsByRange</key>
-                    <dict>
-                      <key>{0, 1}</key>
-                      <dict>
-                        <key>Type</key>
-                        <string>Variable</string>
-                        <key>VariableName</key>
-                        <string>Amount</string>
-                      </dict>
-                    </dict>
-                  </dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-              </dict>
-              <!-- seller from Wallet Merchant -->
-              <dict>
-                <key>WFItemType</key>
-                <integer>0</integer>
-                <key>WFKey</key>
-                <dict>
-                  <key>Value</key>
-                  <dict><key>string</key><string>seller</string></dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-                <key>WFValue</key>
-                <dict>
-                  <key>Value</key>
-                  <dict>
-                    <key>string</key>
-                    <string>\uFFFC</string>
-                    <key>attachmentsByRange</key>
-                    <dict>
-                      <key>{0, 1}</key>
-                      <dict>
-                        <key>Type</key>
-                        <string>Variable</string>
-                        <key>VariableName</key>
-                        <string>Merchant</string>
-                      </dict>
-                    </dict>
-                  </dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-              </dict>
-              <!-- card from Wallet Card -->
-              <dict>
-                <key>WFItemType</key>
-                <integer>0</integer>
-                <key>WFKey</key>
-                <dict>
-                  <key>Value</key>
-                  <dict><key>string</key><string>card</string></dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-                <key>WFValue</key>
-                <dict>
-                  <key>Value</key>
-                  <dict>
-                    <key>string</key>
-                    <string>\uFFFC</string>
-                    <key>attachmentsByRange</key>
-                    <dict>
-                      <key>{0, 1}</key>
-                      <dict>
-                        <key>Type</key>
-                        <string>Variable</string>
-                        <key>VariableName</key>
-                        <string>Card</string>
-                      </dict>
-                    </dict>
-                  </dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-              </dict>
-            </array>
-          </dict>
-        </dict>
-      </dict>
-    </dict>
-    <!-- POST to API -->
-    <dict>
-      <key>WFWorkflowActionIdentifier</key>
-      <string>is.workflow.actions.downloadurl</string>
-      <key>WFWorkflowActionParameters</key>
-      <dict>
-        <key>WFURL</key>
-        <string>${apiUrl}/api/transactions</string>
-        <key>WFHTTPMethod</key>
-        <string>POST</string>
-        <key>WFHTTPHeaders</key>
-        <dict>
-          <key>Value</key>
-          <dict>
-            <key>WFDictionaryFieldValueItems</key>
-            <array>
-              <dict>
-                <key>WFItemType</key>
-                <integer>0</integer>
-                <key>WFKey</key>
-                <dict>
-                  <key>Value</key>
-                  <dict><key>string</key><string>Authorization</string></dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-                <key>WFValue</key>
-                <dict>
-                  <key>Value</key>
-                  <dict><key>string</key><string>Bearer ${token}</string></dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-              </dict>
-              <dict>
-                <key>WFItemType</key>
-                <integer>0</integer>
-                <key>WFKey</key>
-                <dict>
-                  <key>Value</key>
-                  <dict><key>string</key><string>Content-Type</string></dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-                <key>WFValue</key>
-                <dict>
-                  <key>Value</key>
-                  <dict><key>string</key><string>application/json</string></dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-              </dict>
-            </array>
-          </dict>
-        </dict>
-        <key>WFHTTPBodyType</key>
-        <string>Json</string>
-        <key>WFJSONValues</key>
-        <dict>
-          <key>Value</key>
-          <dict>
-            <key>WFSerializationType</key>
-            <string>WFTextTokenAttachment</string>
-            <key>Value</key>
-            <dict>
-              <key>Type</key>
-              <string>ActionOutput</string>
-              <key>OutputName</key>
-              <string>Dictionary</string>
-            </dict>
-          </dict>
-        </dict>
-      </dict>
-    </dict>
-    <!-- Notification -->
-    <dict>
-      <key>WFWorkflowActionIdentifier</key>
-      <string>is.workflow.actions.notification</string>
-      <key>WFWorkflowActionParameters</key>
-      <dict>
-        <key>WFNotificationActionBody</key>
-        <dict>
-          <key>Value</key>
-          <dict>
-            <key>string</key>
-            <string>\uFFFC zl u \uFFFC</string>
-            <key>attachmentsByRange</key>
-            <dict>
-              <key>{0, 1}</key>
-              <dict>
-                <key>Type</key>
-                <string>Variable</string>
-                <key>VariableName</key>
-                <string>Amount</string>
-              </dict>
-              <key>{6, 1}</key>
-              <dict>
-                <key>Type</key>
-                <string>Variable</string>
-                <key>VariableName</key>
-                <string>Merchant</string>
-              </dict>
-            </dict>
-          </dict>
-          <key>WFSerializationType</key>
-          <string>WFTextTokenString</string>
-        </dict>
-        <key>WFNotificationActionTitle</key>
-        <string>Payment Tracker</string>
-      </dict>
-    </dict>
-  </array>
-</dict>
-</plist>`;
+function makeTextToken(str: string, attachments?: Record<string, { Type: string; VariableName?: string; OutputName?: string }>): Record<string, any> {
+  const value: Record<string, any> = { string: str };
+  if (attachments) {
+    value.attachmentsByRange = attachments;
+  }
+  return {
+    Value: value,
+    WFSerializationType: "WFTextTokenString",
+  };
+}
+
+function makeDictField(key: string, value: Record<string, any>): Record<string, any> {
+  return {
+    WFItemType: 0,
+    WFKey: makeTextToken(key),
+    WFValue: value,
+  };
+}
+
+function makeVariableToken(varName: string): Record<string, any> {
+  return makeTextToken("\uFFFC", {
+    "{0, 1}": { Type: "Variable", VariableName: varName },
+  });
+}
+
+function generateShortcutData(apiUrl: string, token: string): Record<string, any> {
+  return {
+    WFWorkflowMinimumClientVersion: 900,
+    WFWorkflowMinimumClientVersionString: "900",
+    WFWorkflowImportQuestions: [],
+    WFWorkflowTypes: ["WatchKit", "NCWidget"],
+    WFWorkflowInputContentItemClasses: [],
+    WFWorkflowIcon: {
+      WFWorkflowIconStartColor: 4274264319,
+      WFWorkflowIconGlyphNumber: 59470,
+    },
+    WFWorkflowName: "Dodaj Platnosc",
+    WFWorkflowActions: [
+      // Build JSON from Wallet automation magic variables
+      {
+        WFWorkflowActionIdentifier: "is.workflow.actions.dictionary",
+        WFWorkflowActionParameters: {
+          WFItems: {
+            Value: {
+              WFDictionaryFieldValueItems: [
+                makeDictField("amount", makeVariableToken("Amount")),
+                makeDictField("seller", makeVariableToken("Merchant")),
+                makeDictField("card", makeVariableToken("Card")),
+              ],
+            },
+          },
+        },
+      },
+      // POST to API
+      {
+        WFWorkflowActionIdentifier: "is.workflow.actions.downloadurl",
+        WFWorkflowActionParameters: {
+          WFURL: `${apiUrl}/api/transactions`,
+          WFHTTPMethod: "POST",
+          WFHTTPHeaders: {
+            Value: {
+              WFDictionaryFieldValueItems: [
+                makeDictField("Authorization", makeTextToken(`Bearer ${token}`)),
+                makeDictField("Content-Type", makeTextToken("application/json")),
+              ],
+            },
+          },
+          WFHTTPBodyType: "Json",
+          WFJSONValues: {
+            Value: {
+              WFSerializationType: "WFTextTokenAttachment",
+              Value: {
+                Type: "ActionOutput",
+                OutputName: "Dictionary",
+              },
+            },
+          },
+        },
+      },
+      // Notification
+      {
+        WFWorkflowActionIdentifier: "is.workflow.actions.notification",
+        WFWorkflowActionParameters: {
+          WFNotificationActionBody: makeTextToken("\uFFFC zl u \uFFFC", {
+            "{0, 1}": { Type: "Variable", VariableName: "Amount" },
+            "{6, 1}": { Type: "Variable", VariableName: "Merchant" },
+          }),
+          WFNotificationActionTitle: "Payment Tracker",
+        },
+      },
+    ],
+  };
 }
 
 shortcut.get("/download", (c) => {
   const user = c.get("user") as User;
   const apiUrl = process.env.BASE_URL ?? "http://localhost:3010";
 
-  const plist = generateShortcutPlist(apiUrl, user.api_token);
+  const data = generateShortcutData(apiUrl, user.api_token);
+  const bplist = bplistCreator(data);
 
   logger.info({ userId: user.id }, "shortcut file downloaded");
 
-  return new Response(plist, {
+  return new Response(bplist, {
     headers: {
-      "Content-Type": "application/octet-stream",
+      "Content-Type": "application/x-apple-shortcut",
       "Content-Disposition": 'attachment; filename="Dodaj Platnosc.shortcut"',
     },
   });

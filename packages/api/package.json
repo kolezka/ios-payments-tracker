@@ -1,6 +1,7 @@
 {
   "name": "@payment-tracker/api",
   "dependencies": {
+    "bplist-creator": "^0.1.1",
     "hono": "^4",
     "nodemailer": "^8.0.4",
     "pino": "^10.3.1",
