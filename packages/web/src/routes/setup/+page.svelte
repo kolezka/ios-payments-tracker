@@ -40,7 +40,17 @@
   </div>
 
   <div class="glass p-6 mb-4">
-    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Install Shortcut</h2>
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">1. Enable Private Sharing</h2>
+    <p class="text-sm text-text-secondary mb-3">Required one-time step to allow installing custom shortcuts:</p>
+    <ol class="text-sm text-text-secondary space-y-1 mb-3 list-decimal list-inside">
+      <li>Open <strong class="text-text-primary">Settings</strong> on your iPhone</li>
+      <li>Go to <strong class="text-text-primary">Shortcuts</strong> &rarr; <strong class="text-text-primary">Advanced</strong></li>
+      <li>Enable <strong class="text-text-primary">Private Sharing</strong></li>
+    </ol>
+  </div>
+
+  <div class="glass p-6 mb-4">
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">2. Install Shortcut</h2>
     <p class="text-sm text-text-secondary mb-4">Automation for Wallet card tap. Automatically captures amount, merchant, and card name — no input needed.</p>
     <a href={data.downloadUrl}
       class="block w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold transition-colors text-center">

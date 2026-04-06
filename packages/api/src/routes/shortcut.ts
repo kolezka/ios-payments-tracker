@@ -110,8 +110,8 @@ shortcut.get("/download", (c) => {
 
   return new Response(bplist, {
     headers: {
-      "Content-Type": "application/x-apple-shortcut",
-      "Content-Disposition": 'attachment; filename="Dodaj Platnosc.shortcut"',
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": 'attachment; filename="Dodaj-Platnosc.shortcut"',
     },
   });
 });
