@@ -40,12 +40,23 @@
   </div>
 
   <div class="glass p-6 mb-4">
-    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">One-Tap Setup</h2>
-    <a href={data.downloadUrl}
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Install Shortcut</h2>
+    <p class="text-sm text-text-secondary mb-4">Automation for Wallet card tap. Automatically captures amount, merchant, and card name — no input needed.</p>
+    <a href={data.importUrl}
       class="block w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold transition-colors text-center">
       Add to Shortcuts
     </a>
-    <p class="text-xs text-text-dim mt-3 text-center">Downloads a pre-configured Shortcut with your token</p>
+    <p class="text-xs text-text-dim mt-3 text-center">Opens Shortcuts app with import dialog</p>
+    <div class="mt-3 flex gap-2">
+      <a href={data.downloadUrl}
+        class="flex-1 py-2 rounded-lg bg-glass-bg border border-glass-border text-text-secondary text-xs hover:text-accent hover:border-accent/30 transition-colors text-center">
+        Download .shortcut file
+      </a>
+      <button onclick={() => copyToClipboard(data.importUrl, 'import')}
+        class="flex-1 py-2 rounded-lg bg-glass-bg border border-glass-border text-text-secondary text-xs hover:text-accent hover:border-accent/30 transition-colors cursor-pointer">
+        {copiedField === 'import' ? 'Copied!' : 'Copy import link'}
+      </button>
+    </div>
   </div>
 
   <div class="glass p-6">

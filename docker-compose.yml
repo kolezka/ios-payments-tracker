@@ -5,9 +5,18 @@ services:
     ports:
       - "3010:3010"
     environment:
-      - AUTH_TOKEN=${AUTH_TOKEN}
       - PORT=3010
       - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - DEV_MODE=${DEV_MODE:-false}
+      - BASE_URL=${BASE_URL:-http://localhost:3011}
+      - WEB_ORIGIN=${WEB_ORIGIN:-http://localhost:3011}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
     volumes:
       - api-data:/app/data
       - ./logs:/app/logs
@@ -26,9 +35,10 @@ services:
       - "3011:3011"
     environment:
       - API_URL=http://api:3010
-      - AUTH_TOKEN=${AUTH_TOKEN}
+      - BASE_URL=${BASE_URL:-http://localhost:3011}
       - PORT=3011
       - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - DEV_MODE=${DEV_MODE:-false}
     volumes:
       - ./logs:/app/logs
     depends_on:

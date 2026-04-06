@@ -1,23 +1,27 @@
 import { redirect, type Handle } from "@sveltejs/kit";
 import { logger } from "$lib/logger";
 
-const API_URL = process.env.API_URL ?? "http://localhost:3010";
 const PUBLIC_PATHS = ["/login", "/auth/verify", "/auth/github/callback"];
+const DEV_MODE = process.env.DEV_MODE === "true";
+logger.info({ DEV_MODE }, "hooks loaded");
 
 export const handle: Handle = async ({ event, resolve }) => {
   const start = Date.now();
   const { pathname, search } = event.url;
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
-  const token = event.cookies.get("session_token");
+  if (DEV_MODE && !isPublic) {
+    event.locals.authToken = "dev-token";
+    event.locals.user = { id: 1, email: "dev@local", name: "Dev User", api_token: "dev-token" };
+  } else if (!isPublic) {
+    const token = event.cookies.get("session_token");
 
-  if (!isPublic) {
     if (!token) {
       logger.debug({ pathname }, "no session cookie, redirecting to login");
       redirect(303, "/login");
     }
 
-    const res = await fetch(`${API_URL}/api/auth/me`, {
+    const res = await fetch(`${process.env.API_URL ?? "http://localhost:3010"}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

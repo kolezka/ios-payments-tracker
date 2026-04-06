@@ -30,7 +30,9 @@ app.use("/api/transactions/*", authMiddleware);
 app.use("/api/transactions", authMiddleware);
 app.route("/api/transactions", transactions);
 
+
 app.use("/api/shortcut/*", authMiddleware);
+app.use("/api/shortcut", authMiddleware);
 app.route("/api/shortcut", shortcut);
 
 app.get("/health", (c) => {
