@@ -2,6 +2,7 @@
   import { enhance } from "$app/forms";
 
   let { form }: { form: any } = $props();
+  let submitting = $state(false);
 </script>
 
 <div class="fixed inset-0 bg-ambient -z-10"></div>
@@ -23,7 +24,7 @@
         </div>
       {/if}
 
-      <form method="POST" action="?/magic-link" use:enhance class="mb-6">
+      <form method="POST" action="?/magic-link" use:enhance={() => { submitting = true; return async ({ update }) => { submitting = false; await update(); }; }} class="mb-6">
         <input
           type="email"
           name="email"
@@ -35,9 +36,10 @@
         />
         <button
           type="submit"
-          class="w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold transition-colors cursor-pointer"
+          disabled={submitting}
+          class="w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors cursor-pointer"
         >
-          Send magic link
+          {submitting ? 'Sending...' : 'Send magic link'}
         </button>
       </form>
 
