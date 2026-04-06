@@ -53,15 +53,6 @@ export const load: ServerLoad = async ({ locals, url }) => {
     groupMap.get(date)!.push(tx);
   }
 
-  const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? process.env.API_URL ?? "http://localhost:3010";
-  const exportBaseUrl = `${PUBLIC_API_URL}/api/transactions/export?token=${locals.authToken}`;
-  const exportFilterParams = new URLSearchParams();
-  if (from) exportFilterParams.set("from", from);
-  if (to) exportFilterParams.set("to", to);
-  const exportUrl = exportFilterParams.toString()
-    ? `${exportBaseUrl}&${exportFilterParams}`
-    : exportBaseUrl;
-
   return {
     authenticated: true,
     dayGroups,
@@ -69,6 +60,5 @@ export const load: ServerLoad = async ({ locals, url }) => {
     page,
     totalPages,
     filters: { from, to },
-    exportBaseUrl: exportUrl,
   };
 };

@@ -19,13 +19,13 @@
 
 {#if data.authenticated}
   <!-- Dashboard -->
-  <div class="max-w-[800px] mx-auto px-5 pb-12">
+  <div class="max-w-5xl mx-auto px-5 pb-12">
     <div class="grid grid-cols-2 gap-3 mb-6">
       <BarChart dailyTotals={data.stats.daily_totals ?? []} />
       <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
     </div>
 
-    <FilterBar filters={data.filters} exportBaseUrl={data.exportBaseUrl} />
+    <FilterBar filters={data.filters} />
 
     {#if data.dayGroups.length === 0}
       <div class="text-center py-12 text-text-muted text-sm">No transactions yet</div>

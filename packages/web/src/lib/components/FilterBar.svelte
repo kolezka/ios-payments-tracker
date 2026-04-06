@@ -4,7 +4,7 @@
   interface Filters { from: string; to: string; }
   interface Preset { label: string; from: () => string; to: () => string; }
 
-  let { filters, exportBaseUrl }: { filters: Filters; exportBaseUrl: string } = $props();
+  let { filters }: { filters: Filters } = $props();
 
   function today() { return new Date().toISOString().slice(0, 10); }
   function daysAgo(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); }
@@ -61,13 +61,5 @@
     <span class="text-text-dim text-xs">&rarr;</span>
     <input type="date" value={filters.to} onchange={(e) => onDateChange(e, "to")}
       class="bg-white/[0.03] border border-glass-border rounded-lg px-2.5 py-1.5 text-text-muted text-xs font-sans focus:outline-none focus:border-accent/40 focus:text-accent" />
-    <a href="{exportBaseUrl}&format=csv" target="_blank"
-      class="px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-glass-border text-text-muted text-xs hover:text-accent hover:border-accent/30 transition-colors" title="Export CSV">
-      CSV
-    </a>
-    <a href="{exportBaseUrl}&format=json" target="_blank"
-      class="px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-glass-border text-text-muted text-xs hover:text-accent hover:border-accent/30 transition-colors" title="Export JSON">
-      JSON
-    </a>
   </div>
 </div>

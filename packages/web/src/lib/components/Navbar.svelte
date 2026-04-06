@@ -20,7 +20,7 @@
 
 {#if user}
   <div class="sticky top-0 z-50 flex justify-center px-5 py-4" style="background: linear-gradient(180deg, rgba(8,10,16,0.9) 0%, transparent 100%);">
-    <nav class="flex items-center justify-end w-full max-w-[800px]">
+    <nav class="glass-strong flex items-center justify-end w-full max-w-5xl px-3 py-1.5">
       <div class="nav-dropdown-area relative">
         <button
           onclick={() => dropdownOpen = !dropdownOpen}
@@ -38,6 +38,9 @@
             </div>
             <a href="/setup" class="block px-4 py-2 text-sm text-text-secondary hover:text-accent hover:bg-white/5 transition-colors">
               Shortcut Setup
+            </a>
+            <a href="/export" class="block px-4 py-2 text-sm text-text-secondary hover:text-accent hover:bg-white/5 transition-colors">
+              Export
             </a>
             <a href="/settings" class="block px-4 py-2 text-sm text-text-secondary hover:text-accent hover:bg-white/5 transition-colors">
               Settings
