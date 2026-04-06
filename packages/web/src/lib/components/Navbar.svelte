@@ -20,7 +20,7 @@
 
 {#if user}
   <div class="sticky top-0 z-50 flex justify-center px-5 py-4" style="background: linear-gradient(180deg, rgba(8,10,16,0.9) 0%, transparent 100%);">
-    <nav class="glass-strong flex items-center justify-end w-full max-w-[800px] px-2 py-1.5">
+    <nav class="flex items-center justify-end w-full max-w-[800px]">
       <div class="nav-dropdown-area relative">
         <button
           onclick={() => dropdownOpen = !dropdownOpen}
