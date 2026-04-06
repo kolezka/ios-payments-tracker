@@ -7,7 +7,7 @@ const BASE_URL = process.env.BASE_URL ?? "http://localhost:5173";
 export const load: ServerLoad = async ({ locals }) => {
   const apiEndpoint = `${PUBLIC_API_URL}/api/transactions`;
   const token = locals.authToken;
-  const downloadUrl = `${PUBLIC_API_URL}/api/shortcut/download`;
+  const downloadUrl = `${PUBLIC_API_URL}/api/shortcut/download?token=${token}`;
   const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}&name=${encodeURIComponent("Dodaj Platnosc")}`;
 
   const qrData = `${BASE_URL}/setup`;

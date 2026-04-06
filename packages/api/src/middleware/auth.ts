@@ -28,13 +28,14 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   }
 
   const header = c.req.header("Authorization");
-  if (!header) {
+  const queryToken = c.req.query("token");
+
+  if (!header && !queryToken) {
     logger.warn({ path: c.req.path, method: c.req.method }, "missing Authorization header");
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const isBearerFormat = header.startsWith("Bearer ");
-  const token = isBearerFormat ? header.slice(7) : header;
+  const token = queryToken ?? (header!.startsWith("Bearer ") ? header!.slice(7) : header!);
 
   const user = db.prepare("SELECT * FROM users WHERE api_token = ?").get(token) as User | null;
   if (!user) {
