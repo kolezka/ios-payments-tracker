@@ -1,6 +1,9 @@
 <script>
   import "../app.css";
-  let { children } = $props();
+  import Navbar from "$lib/components/Navbar.svelte";
+
+  let { children, data } = $props();
 </script>
 
+<Navbar user={data?.user ?? null} />
 {@render children()}
