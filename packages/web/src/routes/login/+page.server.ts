@@ -4,37 +4,38 @@ import { logger } from "$lib/logger";
 const API_URL = process.env.API_URL ?? "http://localhost:3010";
 
 export const actions: Actions = {
-  login: async ({ request, cookies }) => {
+  "magic-link": async ({ request }) => {
     const data = await request.formData();
-    const token = data.get("token") as string;
+    const email = data.get("email") as string;
 
-    if (!token) {
-      logger.warn("login attempt with empty token");
-      return fail(400, { error: "Token is required" });
+    if (!email) {
+      return fail(400, { error: "Email is required", email: "" });
     }
 
-    logger.info({ tokenLength: token.length }, "login attempt");
+    logger.info({ email }, "magic link request");
 
-    // Validate token against the API
-    const res = await fetch(`${API_URL}/api/transactions?limit=1`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const res = await fetch(`${API_URL}/api/auth/magic-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
     });
 
     if (!res.ok) {
-      logger.warn({ status: res.status }, "login failed - invalid token");
-      return fail(401, { error: "Invalid token" });
+      const err = await res.json();
+      return fail(res.status, { error: err.error ?? "Failed to send email", email });
     }
 
-    cookies.set("session_token", token, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-    });
+    return { success: true, email };
+  },
 
-    logger.info("login successful");
-    redirect(303, "/");
+  github: async () => {
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    if (!clientId) {
+      return fail(500, { error: "GitHub OAuth not configured" });
+    }
+    const baseUrl = process.env.BASE_URL ?? "http://localhost:5173";
+    const redirectUri = `${baseUrl}/auth/github/callback`;
+    redirect(303, `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`);
   },
 
   logout: async ({ cookies }) => {
