@@ -1,19 +1,10 @@
-<script>
-  let { children } = $props();
+<script lang="ts">
+  import "../app.css";
+  import Navbar from "$lib/components/Navbar.svelte";
+  import type { Snippet } from "svelte";
+
+  let { children, data }: { children: Snippet; data: { user?: { name: string; email: string } | null } } = $props();
 </script>
 
+<Navbar user={data?.user ?? null} />
 {@render children()}
-
-<style>
-  :global(body) {
-    margin: 0;
-    background: #0a0a0a;
-    color: #e0e0e0;
-    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  :global(*, *::before, *::after) {
-    box-sizing: border-box;
-  }
-</style>

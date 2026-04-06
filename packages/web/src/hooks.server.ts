@@ -1,12 +1,8 @@
 import { redirect, type Handle } from "@sveltejs/kit";
 import { logger } from "$lib/logger";
 
-const AUTH_TOKEN = process.env.AUTH_TOKEN ?? "";
-const PUBLIC_PATHS = ["/login"];
-
-if (!AUTH_TOKEN) {
-  logger.error("AUTH_TOKEN is not set — all authenticated requests will fail");
-}
+const API_URL = process.env.API_URL ?? "http://localhost:3010";
+const PUBLIC_PATHS = ["/login", "/auth/verify", "/auth/github/callback"];
 
 export const handle: Handle = async ({ event, resolve }) => {
   const start = Date.now();
@@ -20,15 +16,25 @@ export const handle: Handle = async ({ event, resolve }) => {
       logger.debug({ pathname }, "no session cookie, redirecting to login");
       redirect(303, "/login");
     }
-    if (token !== AUTH_TOKEN) {
-      logger.warn({ pathname, tokenLength: token.length }, "invalid session token");
+
+    const res = await fetch(`${API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      logger.warn({ pathname }, "invalid session token");
+      event.cookies.delete("session_token", { path: "/" });
       redirect(303, "/login");
     }
+
+    const user = await res.json();
+    event.locals.authToken = token;
+    event.locals.user = user;
+
+    if (user.name === "" && pathname !== "/onboarding") {
+      redirect(303, "/onboarding");
+    }
   }
-
-  event.locals.authToken = token ?? "";
-
-  logger.debug({ pathname, isPublic, hasToken: !!token }, "request authenticated");
 
   const response = await resolve(event);
 

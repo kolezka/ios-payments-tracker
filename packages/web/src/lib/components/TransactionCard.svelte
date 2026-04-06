@@ -1,90 +1,51 @@
 <script lang="ts">
-  import { relativeTime } from "$lib/time";
-
   let { transaction }: { transaction: Record<string, any> } = $props();
 
-  function formatAmount(amount: number, currency: string) {
-    return new Intl.NumberFormat("pl-PL", {
-      style: "currency",
-      currency: currency || "PLN",
-    }).format(amount);
+  function formatPLN(amount: number) {
+    return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount);
+  }
+
+  function formatTime(timestamp: string): string {
+    const d = new Date(timestamp + "Z");
+    const now = Date.now();
+    const diff = now - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins <= 1 ? "just now" : `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  const badgeColors: Record<string, string> = {};
+  const colorPool = [
+    "bg-badge-indigo-bg text-badge-indigo-text",
+    "bg-badge-emerald-bg text-badge-emerald-text",
+    "bg-badge-amber-bg text-badge-amber-text",
+  ];
+
+  function getBadgeClass(card: string): string {
+    if (!badgeColors[card]) {
+      const idx = Object.keys(badgeColors).length % colorPool.length;
+      badgeColors[card] = colorPool[idx];
+    }
+    return badgeColors[card];
   }
 </script>
 
-<div class="card">
-  <div class="row">
-    <span class="amount">{formatAmount(transaction.amount, transaction.currency)}</span>
-    <span class="time">{relativeTime(transaction.timestamp)}</span>
-  </div>
-  <div class="row">
-    <span class="merchant">{transaction.merchant}</span>
-    {#if transaction.category}
-      <span class="category">{transaction.category}</span>
-    {/if}
-  </div>
-  {#if transaction.note || transaction.card_last4}
-    <div class="row meta">
-      {#if transaction.note}
-        <span class="note">{transaction.note}</span>
+<div class="glass flex justify-between items-center px-5 py-3.5 rounded-[14px] hover:bg-white/[0.04] hover:border-white/[0.08] hover:shadow-[0_2px_16px_rgba(0,0,0,0.1)] transition-all">
+  <div>
+    <div class="text-[0.95rem] font-medium text-text-primary">{transaction.seller}</div>
+    <div class="flex gap-2 items-center mt-1">
+      {#if transaction.card}
+        <span class="px-2 py-0.5 rounded-md text-[0.65rem] font-medium {getBadgeClass(transaction.card)}">{transaction.card}</span>
       {/if}
-      {#if transaction.card_last4}
-        <span class="card-digits">*{transaction.card_last4}</span>
+      {#if transaction.title}
+        <span class="text-[0.78rem] text-text-muted">{transaction.title}</span>
       {/if}
     </div>
-  {/if}
+  </div>
+  <div class="text-right">
+    <div class="text-[1.05rem] font-semibold text-expense tracking-tight">{formatPLN(transaction.amount)}</div>
+    <div class="text-[0.68rem] text-text-dim mt-0.5">{formatTime(transaction.timestamp)}</div>
+  </div>
 </div>
-
-<style>
-  .card {
-    background: #1a1a1a;
-    border: 1px solid #222;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .row + .row {
-    margin-top: 0.5rem;
-  }
-
-  .amount {
-    color: #ff6b6b;
-    font-weight: bold;
-    font-size: 1.1rem;
-  }
-
-  .time {
-    color: #555;
-    font-size: 0.8rem;
-  }
-
-  .merchant {
-    color: #ccc;
-  }
-
-  .category {
-    background: #00ff8820;
-    color: #00ff88;
-    padding: 0.15rem 0.5rem;
-    font-size: 0.75rem;
-  }
-
-  .meta {
-    color: #555;
-    font-size: 0.8rem;
-  }
-
-  .note {
-    font-style: italic;
-  }
-
-  .card-digits {
-    color: #444;
-  }
-</style>

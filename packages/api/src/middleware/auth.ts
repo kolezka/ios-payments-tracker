@@ -1,40 +1,27 @@
 import { createMiddleware } from "hono/factory";
 import { logger } from "../logger";
+import db from "../db";
+import type { User } from "../types";
 
 export const authMiddleware = createMiddleware(async (c, next) => {
-  const authToken = process.env.AUTH_TOKEN;
-  if (!authToken) {
-    logger.error("AUTH_TOKEN not set");
-    return c.json({ error: "Server misconfigured: AUTH_TOKEN not set" }, 500);
-  }
-
   const header = c.req.header("Authorization");
   if (!header) {
-    logger.warn({
-      path: c.req.path,
-      method: c.req.method,
-      headers: Object.fromEntries(
-        [...c.req.raw.headers.entries()].filter(([k]) => k !== "authorization")
-      ),
-    }, "missing Authorization header");
+    logger.warn({ path: c.req.path, method: c.req.method }, "missing Authorization header");
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // Accept both "Bearer <token>" and raw "<token>" (iOS Shortcuts sends raw)
   const isBearerFormat = header.startsWith("Bearer ");
   const token = isBearerFormat ? header.slice(7) : header;
-  logger.debug({ isBearerFormat, tokenLength: token.length }, "auth attempt");
 
-  if (token !== authToken) {
-    logger.warn({
-      path: c.req.path,
-      method: c.req.method,
-      isBearerFormat,
-      tokenLength: token.length,
-      expectedLength: authToken.length,
-    }, "invalid auth token");
+  const user = db.prepare("SELECT * FROM users WHERE api_token = ?").get(token) as User | null;
+  if (!user) {
+    logger.warn({ path: c.req.path, isBearerFormat, tokenLength: token.length }, "invalid auth token");
     return c.json({ error: "Unauthorized" }, 401);
   }
+
+  logger.debug({ userId: user.id, email: user.email }, "authenticated");
+  c.set("user", user);
+  c.set("userId", user.id);
 
   await next();
 });
