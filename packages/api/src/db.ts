@@ -46,23 +46,6 @@ db.run(`
   )
 `);
 
-// Migration: if transactions exist without user_id, create default user and assign
-const hasOrphanedTx = db.prepare(
-  "SELECT COUNT(*) as count FROM transactions WHERE user_id IS NULL"
-).get() as { count: number };
-
-if (hasOrphanedTx.count > 0) {
-  logger.info({ count: hasOrphanedTx.count }, "migrating orphaned transactions to default user");
-  const token = crypto.randomUUID();
-  db.run(
-    "INSERT OR IGNORE INTO users (email, name, api_token) VALUES (?, ?, ?)",
-    ["admin@local", "Admin", token]
-  );
-  const adminUser = db.prepare("SELECT id FROM users WHERE email = ?").get("admin@local") as { id: number };
-  db.run("UPDATE transactions SET user_id = ? WHERE user_id IS NULL", [adminUser.id]);
-  logger.info({ userId: adminUser.id, token }, "migration complete — admin token printed above");
-}
-
 logger.info("database initialized");
 
 export default db;
