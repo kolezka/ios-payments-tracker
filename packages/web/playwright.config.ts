@@ -22,7 +22,6 @@ export default defineConfig({
       PORT: "3011",
       API_URL: "http://localhost:3010",
       BASE_URL: "http://localhost:3011",
-      DEV_MODE: "true",
     },
   },
 });
