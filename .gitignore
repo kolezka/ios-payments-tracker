@@ -6,7 +6,8 @@ data/*.db-shm
 data/*.db-wal
 .env
 .DS_Store
-.claude/
+.claude/settings.local.json
+.claude/settings.local.*.json
 .cursor/
 .playwright-mcp/
 *.png

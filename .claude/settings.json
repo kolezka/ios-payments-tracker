@@ -1,0 +1,43 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -q 'packages/web/src/routes'; then cd /Users/me/Development/ios-budget-fn/packages/web && bunx --bun svelte-kit sync 2>/dev/null; fi"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_fill_form",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "Read(//Users/me/.claude/plugins/**)",
+      "Bash(bun:*)",
+      "Bash(bunx:*)",
+      "Bash(npx:*)",
+      "Bash(curl:*)",
+      "Bash(git:*)",
+      "Bash(lsof:*)",
+      "Bash(pkill:*)",
+      "Bash(rm:*)",
+      "Bash(wc:*)",
+      "Bash(xargs kill:*)",
+      "Bash(plutil:*)",
+      "Bash(claude plugin:*)",
+      "Bash(AUTH_TOKEN=* bun:*)",
+      "Bash(API_URL=* bun:*)",
+      "Bash(AUTH_TOKEN=* API_URL=* bun:*)",
+      "Bash(AUTH_TOKEN=* API_URL=* bunx:*)",
+      "Bash(OLDPWD= bun:*)",
+      "Bash(DEBUG=* bun:*)",
+      "Bash(gh auth:*)",
+      "Bash(DEV_MODE=* bun:*)",
+      "Bash(DEV_MODE=* API_URL=* bunx:*)"
+    ]
+  }
+}
