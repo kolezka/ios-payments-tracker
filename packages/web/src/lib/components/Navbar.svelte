@@ -1,8 +1,11 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
+  import { afterNavigate } from "$app/navigation";
 
   let { user }: { user: { name: string; email: string } | null } = $props();
   let dropdownOpen = $state(false);
+
+  afterNavigate(() => { dropdownOpen = false; });
 
   function initials(name: string): string {
     return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
