@@ -8,8 +8,8 @@
 <div class="fixed inset-0 bg-ambient -z-10"></div>
 
 <div class="max-w-2xl mx-auto px-5 pt-20 pb-12">
-  <h1 class="text-2xl font-bold text-text-primary tracking-tight mb-1">Settings</h1>
-  <p class="text-sm text-text-secondary mb-8">Manage webhooks and integrations</p>
+  <h1 class="text-2xl font-bold text-text-primary tracking-tight mb-1">Webhooks</h1>
+  <p class="text-sm text-text-secondary mb-8">Notify external services on new transactions</p>
 
   <!-- Add webhook -->
   <div class="glass-strong p-5 mb-4">
