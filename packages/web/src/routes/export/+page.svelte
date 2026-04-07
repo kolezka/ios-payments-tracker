@@ -8,7 +8,7 @@
     if (from) params.set("from", from);
     if (to) params.set("to", to);
     params.set("format", format);
-    return `${data.exportBaseUrl}&${params}`;
+    return `${data.exportBaseUrl}?${params}`;
   }
 </script>
 
