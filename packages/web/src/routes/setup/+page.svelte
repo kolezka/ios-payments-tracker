@@ -64,36 +64,115 @@
   {/if}
 
   <div class="glass p-5 mb-4">
-    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Manual Setup</h2>
-    <ol class="text-sm text-text-secondary space-y-3 list-decimal list-inside">
-      <li>
-        Open the <strong class="text-text-primary">Shortcuts</strong> app and tap <strong class="text-text-primary">+</strong> to create a new shortcut
-      </li>
-      <li>
-        Add action <strong class="text-text-primary">Dictionary</strong> with these keys:
-        <div class="mt-1.5 ml-5 space-y-1 text-xs">
-          <div><code class="text-indigo-300">amount</code> &rarr; <span class="text-text-dim">Amount (Wallet variable)</span></div>
-          <div><code class="text-indigo-300">seller</code> &rarr; <span class="text-text-dim">Merchant (Wallet variable)</span></div>
-          <div><code class="text-indigo-300">card</code> &rarr; <span class="text-text-dim">Card (Wallet variable)</span></div>
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-6">Manual Setup</h2>
+    <div class="space-y-4">
+
+      <!-- Step 1 -->
+      <div class="flex gap-3">
+        <div class="w-7 h-7 rounded-full bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0 mt-0.5">
+          <span class="text-xs font-bold text-indigo-300">1</span>
         </div>
-      </li>
-      <li>
-        Add action <strong class="text-text-primary">Get Contents of URL</strong>:
-        <div class="mt-1.5 ml-5 space-y-1 text-xs">
-          <div>URL &rarr; <button onclick={() => copyToClipboard(data.apiEndpoint, 'step-url')} class="text-indigo-300 underline cursor-pointer">{copiedField === 'step-url' ? 'Copied!' : 'copy API URL'}</button></div>
-          <div>Method &rarr; <strong class="text-text-primary">POST</strong></div>
-          <div>Headers &rarr; <code class="text-indigo-300">Authorization</code>: <button onclick={() => copyToClipboard(`Bearer ${data.token}`, 'step-bearer')} class="text-indigo-300 underline cursor-pointer">{copiedField === 'step-bearer' ? 'Copied!' : 'copy Bearer token'}</button></div>
-          <div>Headers &rarr; <code class="text-indigo-300">Content-Type</code>: <span class="text-text-dim">application/json</span></div>
-          <div>Body &rarr; <strong class="text-text-primary">Dictionary</strong> (from step 2)</div>
+        <div>
+          <p class="text-sm text-text-primary font-medium">Create a new shortcut</p>
+          <p class="text-xs text-text-muted mt-1">Open the <strong class="text-text-secondary">Shortcuts</strong> app and tap <strong class="text-text-secondary">+</strong></p>
         </div>
-      </li>
-      <li>
-        (Optional) Add action <strong class="text-text-primary">Show Notification</strong> to confirm the payment was logged
-      </li>
-      <li>
-        Go to <strong class="text-text-primary">Automation</strong> tab &rarr; <strong class="text-text-primary">New Automation</strong> &rarr; <strong class="text-text-primary">Transaction</strong> &rarr; pick your card(s) &rarr; run this shortcut
-      </li>
-    </ol>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="flex gap-3">
+        <div class="w-7 h-7 rounded-full bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0 mt-0.5">
+          <span class="text-xs font-bold text-indigo-300">2</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-text-primary font-medium">Add a Dictionary action</p>
+          <p class="text-xs text-text-muted mt-1 mb-2">Map these keys to Wallet variables:</p>
+          <div class="rounded-lg bg-black/25 border border-glass-border p-3 space-y-1.5">
+            <div class="flex items-center gap-2 text-xs">
+              <code class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono">amount</code>
+              <svg class="w-3 h-3 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <span class="text-text-secondary">Amount</span>
+              <span class="text-text-dim">(Wallet)</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <code class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono">seller</code>
+              <svg class="w-3 h-3 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <span class="text-text-secondary">Merchant</span>
+              <span class="text-text-dim">(Wallet)</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <code class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono">card</code>
+              <svg class="w-3 h-3 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <span class="text-text-secondary">Card</span>
+              <span class="text-text-dim">(Wallet)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="flex gap-3">
+        <div class="w-7 h-7 rounded-full bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0 mt-0.5">
+          <span class="text-xs font-bold text-indigo-300">3</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-text-primary font-medium">Add Get Contents of URL</p>
+          <p class="text-xs text-text-muted mt-1 mb-2">Configure the API request:</p>
+          <div class="rounded-lg bg-black/25 border border-glass-border p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-text-muted">URL</span>
+              <button onclick={() => copyToClipboard(data.apiEndpoint, 'step-url')}
+                class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-colors cursor-pointer font-mono text-[0.65rem]">
+                {copiedField === 'step-url' ? 'Copied!' : 'Click to copy'}
+              </button>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-text-muted">Method</span>
+              <span class="text-text-primary font-medium">POST</span>
+            </div>
+            <div class="h-px bg-glass-border"></div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-text-muted">Authorization</span>
+              <button onclick={() => copyToClipboard(`Bearer ${data.token}`, 'step-bearer')}
+                class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-colors cursor-pointer font-mono text-[0.65rem]">
+                {copiedField === 'step-bearer' ? 'Copied!' : 'Click to copy'}
+              </button>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-text-muted">Content-Type</span>
+              <span class="text-text-secondary font-mono text-[0.65rem]">application/json</span>
+            </div>
+            <div class="h-px bg-glass-border"></div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-text-muted">Body</span>
+              <span class="text-text-secondary">Dictionary <span class="text-text-dim">(from step 2)</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="flex gap-3">
+        <div class="w-7 h-7 rounded-full bg-white/[0.03] border border-glass-border flex items-center justify-center shrink-0 mt-0.5">
+          <span class="text-xs font-bold text-text-dim">4</span>
+        </div>
+        <div>
+          <p class="text-sm text-text-muted font-medium">Add Show Notification <span class="text-text-dim font-normal">(optional)</span></p>
+          <p class="text-xs text-text-dim mt-1">Confirms each payment was logged successfully</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="flex gap-3">
+        <div class="w-7 h-7 rounded-full bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0 mt-0.5">
+          <span class="text-xs font-bold text-indigo-300">5</span>
+        </div>
+        <div>
+          <p class="text-sm text-text-primary font-medium">Create Wallet automation</p>
+          <p class="text-xs text-text-muted mt-1"><strong class="text-text-secondary">Automation</strong> &rarr; <strong class="text-text-secondary">New Automation</strong> &rarr; <strong class="text-text-secondary">Transaction</strong> &rarr; pick your card(s) &rarr; run this shortcut</p>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <div class="glass p-5">
