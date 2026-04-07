@@ -9,6 +9,8 @@ packages/api/dist/
 .claude/settings.local.*.json
 .cursor/
 .playwright-mcp/
+playwright-report/
+test-results/
 *.png
 logs/
 .worktrees/
