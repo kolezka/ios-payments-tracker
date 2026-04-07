@@ -19,8 +19,9 @@
 <svelte:window onclick={handleClickOutside} />
 
 {#if user}
-  <div class="sticky top-0 z-50 flex justify-center px-5 py-4" style="background: linear-gradient(180deg, rgba(8,10,16,0.9) 0%, transparent 100%);">
-    <nav class="glass-strong flex items-center justify-end w-full max-w-5xl px-3 py-1.5">
+  <div class="sticky top-0 z-50 px-5 py-4" style="background: linear-gradient(180deg, rgba(8,10,16,0.9) 0%, transparent 100%);">
+    <nav class="glass-strong flex items-center justify-end max-w-[calc(64rem-2.5rem)] mx-auto px-3 py-1.5">
+
       <div class="nav-dropdown-area relative">
         <button
           onclick={() => dropdownOpen = !dropdownOpen}
