@@ -175,16 +175,6 @@
     </div>
   </div>
 
-  <div class="glass p-5">
-    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">QR Code</h2>
-    <div class="flex justify-center">
-      <div class="w-40 h-40">
-        {@html data.qrSvg}
-      </div>
-    </div>
-    <p class="text-xs text-text-dim mt-3 text-center">Scan from your phone to open this setup page</p>
-  </div>
-
   <div class="mt-8 text-center">
     <a href="/" class="text-accent text-sm hover:underline">Go to dashboard</a>
   </div>

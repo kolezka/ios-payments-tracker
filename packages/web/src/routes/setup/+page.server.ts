@@ -1,5 +1,4 @@
 import type { ServerLoad } from "@sveltejs/kit";
-import QRCode from "qrcode";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:5173";
 const ICLOUD_SHORTCUT_URL = process.env.ICLOUD_SHORTCUT_URL ?? "";
@@ -10,15 +9,12 @@ export const load: ServerLoad = async ({ locals }) => {
   const apiEndpoint = `${BASE_URL}/api/transactions`;
   const token = locals.authToken;
 
-  const qrData = `${BASE_URL}/setup`;
-  const qrSvg = await QRCode.toString(qrData, { type: "svg", margin: 1, color: { dark: "#a5b4fc", light: "#00000000" } });
-
   return {
     apiEndpoint, token,
     downloadUrl: "/api/shortcut",
     icloudUrl: ICLOUD_SHORTCUT_URL,
     showDownloadShortcut: SHOW_DOWNLOAD_SHORTCUT,
     showAddShortcut: SHOW_ADD_SHORTCUT,
-    qrSvg, user: locals.user,
+    user: locals.user,
   };
 };
