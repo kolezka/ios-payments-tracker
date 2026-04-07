@@ -27,6 +27,26 @@
 
     <FilterBar filters={data.filters} />
 
+    {#if data.showShortcutWidget && data.dayGroups.length === 0}
+      <div class="glass p-5 mb-6">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-semibold text-text-primary mb-1">Set up iOS Shortcut</h3>
+            <p class="text-xs text-text-secondary leading-relaxed mb-3">Connect your iPhone to automatically track payments from Apple Wallet.</p>
+            <a href="/setup"
+              class="inline-flex px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-semibold transition-colors">
+              Set up now
+            </a>
+          </div>
+        </div>
+      </div>
+    {/if}
+
     {#if data.dayGroups.length === 0}
       <div class="text-center py-12 text-text-muted text-sm">No transactions yet</div>
     {:else}

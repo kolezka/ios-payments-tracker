@@ -39,9 +39,9 @@
     </div>
   </div>
 
-  {#if data.icloudUrl}
+  {#if data.showAddShortcut && data.icloudUrl}
     <div class="glass p-5 mb-4">
-      <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Option A &mdash; Quick Install</h2>
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Add Shortcut</h2>
       <p class="text-sm text-text-secondary mb-4">Install via iCloud and paste your credentials when prompted.</p>
       <a href={data.icloudUrl}
         class="block w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold transition-colors text-center">
@@ -51,10 +51,20 @@
     </div>
   {/if}
 
+  {#if data.showDownloadShortcut}
+    <div class="glass p-5 mb-4">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Download Shortcut</h2>
+      <p class="text-sm text-text-secondary mb-4">Download the .shortcut file with your API credentials baked in.</p>
+      <a href={data.downloadUrl}
+        class="block w-full py-3 rounded-xl bg-white/5 border border-glass-border-strong hover:bg-white/8 text-text-primary text-sm font-semibold transition-colors text-center">
+        Download .shortcut
+      </a>
+      <p class="text-xs text-text-dim mt-3 text-center">Open the downloaded file to add it to Shortcuts</p>
+    </div>
+  {/if}
+
   <div class="glass p-5 mb-4">
-    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">
-      {#if data.icloudUrl}Option B &mdash; {:else}Install &mdash; {/if}Manual Setup
-    </h2>
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">Manual Setup</h2>
     <ol class="text-sm text-text-secondary space-y-3 list-decimal list-inside">
       <li>
         Open the <strong class="text-text-primary">Shortcuts</strong> app and tap <strong class="text-text-primary">+</strong> to create a new shortcut

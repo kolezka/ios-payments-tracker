@@ -3,6 +3,7 @@ import { apiFetch } from "$lib/api";
 import { logger } from "$lib/logger";
 
 const PAGE_SIZE = 25;
+const SHOW_SHORTCUT_WIDGET = process.env.SHOW_SHORTCUT_WIDGET !== "false";
 
 export const load: ServerLoad = async ({ locals, url }) => {
   if (!locals.authToken) {
@@ -60,5 +61,6 @@ export const load: ServerLoad = async ({ locals, url }) => {
     page,
     totalPages,
     filters: { from, to },
+    showShortcutWidget: SHOW_SHORTCUT_WIDGET,
   };
 };
