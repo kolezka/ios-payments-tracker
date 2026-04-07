@@ -103,7 +103,7 @@ shortcut.get("/download", (c) => {
   const user = c.get("user") as User;
   const apiUrl = process.env.BASE_URL ?? "http://localhost:3010";
 
-  const data = generateShortcutData(apiUrl, user.api_token);
+  const data = generateShortcutData(apiUrl, user.apiToken);
   const bplist = bplistCreator(data);
 
   logger.info({ userId: user.id }, "shortcut file downloaded");

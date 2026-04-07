@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { eq, and, gte, lte, desc, count, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, count } from "drizzle-orm";
 import db, { schema } from "../db";
 import { logger } from "../logger";
-import type { Transaction, User } from "../types";
+import type { User } from "../types";
 import {
   createTransactionSchema,
   listTransactionsSchema,

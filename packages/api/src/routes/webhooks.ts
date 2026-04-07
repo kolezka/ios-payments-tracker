@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { eq, and, desc } from "drizzle-orm";
 import db, { schema } from "../db";
 import { logger } from "../logger";
-import type { Webhook } from "../types";
 
 const webhooks = new Hono();
 

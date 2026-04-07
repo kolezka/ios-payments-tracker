@@ -1,14 +1,11 @@
 <script lang="ts">
   import TransactionCard from "./TransactionCard.svelte";
+  import { formatPLN } from "$lib/format";
 
   let { date, transactions }: {
     date: string;
     transactions: Array<Record<string, any>>;
   } = $props();
-
-  function formatPLN(amount: number) {
-    return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount);
-  }
 
   function formatDayHeader(dateStr: string): string {
     const d = new Date(dateStr + "T00:00:00");

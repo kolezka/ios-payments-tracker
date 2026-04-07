@@ -1,9 +1,6 @@
 <script lang="ts">
+  import { formatPLN } from "$lib/format";
   let { dailyTotals }: { dailyTotals: Array<{ date: string; total: number }> } = $props();
-
-  function formatPLN(amount: number) {
-    return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount);
-  }
 
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 

@@ -1,15 +1,24 @@
 # Payment Tracker
 
-A self-hosted payment tracking app. Accepts transactions from Apple Shortcuts via API and displays them in a dark-themed dashboard.
+A self-hosted payment tracking app with AES-256-GCM encryption. Accepts transactions from Apple Wallet via iOS Shortcuts and displays them in a glassmorphic dashboard.
+
+**Stack:** Bun, Hono, Drizzle ORM, PostgreSQL, SvelteKit, Tailwind CSS
+
+**Currency:** PLN (Polish zloty) — hardcoded in formatting
 
 ## Quick Start
 
 ```bash
 bun install
 cp .env.example .env
-# Edit .env and set a secure AUTH_TOKEN
 
-# Start both API and frontend
+# Start PostgreSQL
+docker compose up db -d
+
+# Push database schema
+cd packages/api && bun run db:push && cd ..
+
+# Start API + frontend
 bun run dev
 ```
 
@@ -19,19 +28,16 @@ API runs on http://localhost:3010, frontend on http://localhost:5173.
 
 ```bash
 cp .env.example .env
-# Edit .env with your AUTH_TOKEN
 docker compose up -d
 ```
 
-API: port 3010, Frontend: port 3011.
+Database migrations run automatically on API startup. PostgreSQL data persists in the `pgdata` Docker volume.
 
-Logs are written to `./logs/api.log` (mounted from the api container).
+API: port 3010, Frontend: port 3011, PostgreSQL: port 5432.
 
 ## Apple Shortcut Setup
 
 ### Option A: iCloud Link (recommended)
-
-If you have an iCloud shortcut link configured:
 
 1. Open the **/setup** page on your iPhone
 2. Tap **Add to Shortcuts**
@@ -48,7 +54,7 @@ To configure: create the shortcut manually (see Option B), add Import Questions 
    - `seller` → Merchant (Wallet variable)
    - `card` → Card (Wallet variable)
 3. Add **Get Contents of URL** action:
-   - URL: your API endpoint (shown on /setup page)
+   - URL: your endpoint (shown on /setup page)
    - Method: **POST**
    - Headers: `Authorization: Bearer <your-token>`, `Content-Type: application/json`
    - Body: **Dictionary** from step 2
@@ -57,52 +63,27 @@ To configure: create the shortcut manually (see Option B), add Import Questions 
 
 ## Exporting Data
 
-Export transactions as CSV or JSON from the dashboard filter bar, or via API:
+Export from the **Export** page in the dashboard, or via API:
 
 ```bash
-# CSV export
 curl -H "Authorization: Bearer <token>" \
-  "https://your-domain/api/transactions/export?format=csv&from=2026-01-01&to=2026-12-31"
-
-# JSON export
-curl -H "Authorization: Bearer <token>" \
-  "https://your-domain/api/transactions/export?format=json"
+  "https://your-domain/api/transactions/export?format=csv"
 ```
 
-Both endpoints support `?from` and `?to` date filters.
+Supports `?format=csv|json`, `?from`, `?to` date filters.
 
 ## Webhooks
 
-Webhooks notify external services when transactions are created or deleted.
+Notify external services on transaction events. Manage from the **Webhooks** page.
 
-### Setup
+1. Add a webhook URL and select events (`transaction.created`, `transaction.deleted`)
+2. Optionally add a secret for HMAC-SHA256 signature verification (`X-Webhook-Signature` header)
 
-1. Go to **Settings** (from the user menu)
-2. Add a webhook URL and select events (`transaction.created`, `transaction.deleted`)
-3. Optionally add a secret for HMAC-SHA256 signature verification
+## Encryption
 
-### Payload
+Transaction fields (`amount`, `seller`, `card`, `title`) are encrypted at rest using AES-256-GCM with per-user keys. Keys are auto-generated at signup and stored in the database. Encryption is transparent — data is encrypted on write and decrypted on read.
 
-```json
-{
-  "event": "transaction.created",
-  "timestamp": "2026-04-06T14:30:00.000Z",
-  "data": {
-    "transaction": {
-      "id": 1,
-      "amount": 29.99,
-      "seller": "Amazon",
-      "card": "Visa ****1234",
-      "title": null,
-      "timestamp": "2026-04-06T14:30:00.000Z"
-    }
-  }
-}
-```
-
-### Signature Verification
-
-When a secret is configured, each request includes an `X-Webhook-Signature` header containing an HMAC-SHA256 hex digest of the request body, signed with your secret.
+**Note:** Encryption keys are stored alongside encrypted data. This protects against offline database access (stolen backups) but not full server compromise.
 
 ## API Endpoints
 

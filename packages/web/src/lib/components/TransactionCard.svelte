@@ -1,9 +1,6 @@
 <script lang="ts">
+  import { formatPLN } from "$lib/format";
   let { transaction }: { transaction: Record<string, any> } = $props();
-
-  function formatPLN(amount: number) {
-    return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(amount);
-  }
 
   function formatTime(timestamp: string): string {
     const d = new Date(timestamp + "Z");
