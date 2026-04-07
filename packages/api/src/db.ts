@@ -1,5 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
+import { join } from "path";
 import { logger } from "./logger";
 import * as schema from "./schema";
 
@@ -8,6 +10,14 @@ logger.info({ connectionString: connectionString.replace(/:[^:@]+@/, ":***@") },
 
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
+
+// Run migrations on startup
+const migrationsFolder = join(import.meta.dir, "..", "drizzle");
+migrate(db, { migrationsFolder }).then(() => {
+  logger.info("database migrations applied");
+}).catch((err) => {
+  logger.error({ error: String(err) }, "database migration failed");
+});
 
 export { schema };
 export default db;
