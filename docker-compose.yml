@@ -25,7 +25,7 @@ services:
       - PORT=3010
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - DEV_MODE=${DEV_MODE:-false}
-      - DATABASE_URL=${DATABASE_URL:-postgres://postgres:postgres@db:5432/payment_tracker}
+      - DATABASE_URL=${DATABASE_URL:-postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-payment_tracker}}
       - BASE_URL=${SERVICE_URL_WEB:-http://localhost:3011}
       - WEB_ORIGIN=${SERVICE_URL_WEB:-http://localhost:3011}
       - SMTP_HOST=${SMTP_HOST:-}
