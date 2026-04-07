@@ -47,6 +47,11 @@ jobs:
       - name: Install Playwright
         run: cd packages/web && bunx playwright install --with-deps chromium
 
+      - name: Push database schema
+        run: cd packages/api && bunx drizzle-kit push --force
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/payment_tracker
+
       - name: Start API
         run: cd packages/api && bun run src/index.ts &
         env:

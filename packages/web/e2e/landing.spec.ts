@@ -10,9 +10,9 @@ test.describe("Landing page", () => {
 
   test("shows feature cards", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Wallet Automation")).toBeVisible();
-    await expect(page.getByText("Live Dashboard")).toBeVisible();
-    await expect(page.getByText("Fully Private")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Wallet Automation" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Live Dashboard" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Fully Private" })).toBeVisible();
   });
 
   test("Get started links to login", async ({ page }) => {
