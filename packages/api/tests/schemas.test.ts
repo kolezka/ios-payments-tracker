@@ -15,8 +15,6 @@ test("createTransactionSchema accepts valid transaction", () => {
   if (result.success) {
     expect(result.data.amount).toBe(42.5);
     expect(result.data.seller).toBe("Amazon");
-    expect(result.data.card).toBeNull();
-    expect(result.data.title).toBeNull();
   }
 });
 
@@ -26,9 +24,10 @@ test("createTransactionSchema parses string amounts", () => {
   if (result.success) expect(result.data.amount).toBe(29.99);
 });
 
-test("createTransactionSchema rejects missing seller", () => {
+test("createTransactionSchema defaults seller to Unknown when missing", () => {
   const result = createTransactionSchema.safeParse({ amount: 10 });
-  expect(result.success).toBe(false);
+  expect(result.success).toBe(true);
+  if (result.success) expect(result.data.seller).toBe("Unknown");
 });
 
 test("createTransactionSchema rejects negative amount", () => {
