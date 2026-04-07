@@ -23,6 +23,13 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     const user = getOrCreateDevUser();
     c.set("user", user);
     c.set("userId", user.id);
+    if (!user.encryption_key) {
+      const { generateEncryptionKey } = await import("../crypto");
+      const encKey = await generateEncryptionKey();
+      db.run("UPDATE users SET encryption_key = ? WHERE id = ?", [encKey, user.id]);
+      user.encryption_key = encKey;
+      logger.info({ userId: user.id }, "backfilled encryption key");
+    }
     await next();
     return;
   }
@@ -46,6 +53,14 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   logger.debug({ userId: user.id, email: user.email }, "authenticated");
   c.set("user", user);
   c.set("userId", user.id);
+
+  if (!user.encryption_key) {
+    const { generateEncryptionKey } = await import("../crypto");
+    const encKey = await generateEncryptionKey();
+    db.run("UPDATE users SET encryption_key = ? WHERE id = ?", [encKey, user.id]);
+    user.encryption_key = encKey;
+    logger.info({ userId: user.id }, "backfilled encryption key");
+  }
 
   await next();
 });

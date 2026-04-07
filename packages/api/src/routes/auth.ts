@@ -4,6 +4,7 @@ import { logger } from "../logger";
 import { sendMagicLinkEmail } from "../mail";
 import { magicLinkSchema, updateNameSchema } from "../schemas";
 import type { User } from "../types";
+import { generateEncryptionKey } from "../crypto";
 
 const auth = new Hono();
 
@@ -31,7 +32,7 @@ auth.post("/magic-link", async (c) => {
   return c.json({ success: true });
 });
 
-auth.get("/verify", (c) => {
+auth.get("/verify", async (c) => {
   const token = c.req.query("token");
   if (!token) {
     return c.json({ error: "Token is required" }, 400);
@@ -55,7 +56,8 @@ auth.get("/verify", (c) => {
 
   if (!user) {
     const apiToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
-    db.prepare("INSERT INTO users (email, name, api_token) VALUES (?, ?, ?)").run(link.email, "", apiToken);
+    const encKey = await generateEncryptionKey();
+    db.prepare("INSERT INTO users (email, name, api_token, encryption_key) VALUES (?, ?, ?, ?)").run(link.email, "", apiToken, encKey);
     user = db.prepare("SELECT * FROM users WHERE email = ?").get(link.email) as User;
     logger.info({ email: link.email, userId: user.id }, "new user created via magic link");
   } else {
@@ -134,8 +136,9 @@ auth.post("/github/callback", async (c) => {
 
   if (!user) {
     const apiToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
-    db.prepare("INSERT INTO users (email, name, github_id, api_token) VALUES (?, ?, ?, ?)")
-      .run(email, name, ghIdStr, apiToken);
+    const encKey = await generateEncryptionKey();
+    db.prepare("INSERT INTO users (email, name, github_id, api_token, encryption_key) VALUES (?, ?, ?, ?, ?)")
+      .run(email, name, ghIdStr, apiToken, encKey);
     user = db.prepare("SELECT * FROM users WHERE github_id = ?").get(ghIdStr) as User;
     logger.info({ email, githubId: ghIdStr, userId: user.id }, "new user created via GitHub");
   } else {
