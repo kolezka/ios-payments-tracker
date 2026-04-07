@@ -10,7 +10,8 @@
   },
   "private": true,
   "scripts": {
-    "dev": "bun --hot src/index.ts"
+    "dev": "bun --hot src/index.ts",
+    "migrate:encrypt": "bun scripts/migrate-encrypt.ts"
   },
   "devDependencies": {
     "@types/nodemailer": "^8.0.0",
