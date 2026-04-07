@@ -21,32 +21,41 @@
   <!-- Dashboard -->
   <div class="max-w-4xl mx-auto px-5 pb-12">
     <!-- Top grid: shortcut widget spans left, charts stack right -->
+    <!-- Charts -->
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <BarChart dailyTotals={data.stats.daily_totals ?? []} />
+      <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
+    </div>
+
+    <!-- Quick action widgets -->
     {#if data.showShortcutWidget && data.dayGroups.length === 0}
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <div class="glass p-5 sm:row-span-2 flex flex-col justify-center">
-          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center mb-3">
-            <svg class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <a href="/setup" class="glass p-4 flex items-center gap-3.5 group hover:border-indigo-500/20 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/15 transition-colors">
+            <svg class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+              <path d="M6 15h2"/><path d="M12 15h6"/>
             </svg>
           </div>
-          <h3 class="text-sm font-semibold text-text-primary mb-1">Set up iOS Shortcut</h3>
-          <p class="text-xs text-text-secondary leading-relaxed mb-4">Connect your iPhone to automatically track payments from Apple Wallet.</p>
-          <a href="/setup"
-            class="inline-flex w-fit px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-semibold transition-colors">
-            Set up now
-          </a>
-        </div>
-        <div class="sm:col-span-2">
-          <BarChart dailyTotals={data.stats.daily_totals ?? []} />
-        </div>
-        <div class="sm:col-span-2">
-          <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
-        </div>
-      </div>
-    {:else}
-      <div class="grid grid-cols-2 gap-3 mb-6">
-        <BarChart dailyTotals={data.stats.daily_totals ?? []} />
-        <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-semibold text-text-primary mb-0.5">iOS Shortcut</h3>
+            <p class="text-xs text-text-muted leading-relaxed">Auto-track payments from Wallet</p>
+          </div>
+          <svg class="w-4 h-4 text-text-dim group-hover:text-accent transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+
+        <a href="/export" class="glass p-4 flex items-center gap-3.5 group hover:border-purple-500/20 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 group-hover:bg-purple-500/15 transition-colors">
+            <svg class="w-5 h-5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-semibold text-text-primary mb-0.5">Export Data</h3>
+            <p class="text-xs text-text-muted leading-relaxed">Download as CSV or JSON</p>
+          </div>
+          <svg class="w-4 h-4 text-text-dim group-hover:text-accent transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
       </div>
     {/if}
 
