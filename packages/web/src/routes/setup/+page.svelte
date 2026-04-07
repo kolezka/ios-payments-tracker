@@ -105,6 +105,12 @@
               <span class="text-text-secondary">Card</span>
               <span class="text-text-dim">(Wallet)</span>
             </div>
+            <div class="flex items-center gap-2 text-xs">
+              <code class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono">title</code>
+              <svg class="w-3 h-3 text-text-dim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <span class="text-text-secondary">Title</span>
+              <span class="text-text-dim">(Wallet)</span>
+            </div>
           </div>
         </div>
       </div>

@@ -53,6 +53,7 @@ function generateShortcutData(apiUrl: string, token: string): Record<string, any
                 makeDictField("amount", makeVariableToken("Amount")),
                 makeDictField("seller", makeVariableToken("Merchant")),
                 makeDictField("card", makeVariableToken("Card")),
+                makeDictField("title", makeVariableToken("Title")),
               ],
             },
           },
