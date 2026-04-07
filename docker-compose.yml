@@ -1,4 +1,21 @@
 services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: payment_tracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: ./packages/api
@@ -8,6 +25,7 @@ services:
       - PORT=3010
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - DEV_MODE=${DEV_MODE:-false}
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/payment_tracker
       - BASE_URL=${SERVICE_URL_WEB:-http://localhost:3011}
       - WEB_ORIGIN=${SERVICE_URL_WEB:-http://localhost:3011}
       - SMTP_HOST=${SMTP_HOST:-}
@@ -18,8 +36,10 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
     volumes:
-      - ./data:/app/data
       - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "bun", "--eval", "fetch('http://localhost:3010/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
@@ -52,3 +72,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+volumes:
+  pgdata:

@@ -1,11 +1,10 @@
-import db from "./db";
+import { eq, and } from "drizzle-orm";
+import db, { schema } from "./db";
 import { logger } from "./logger";
-import type { Webhook } from "./types";
 
 export async function fireWebhooks(userId: number, event: string, payload: Record<string, unknown>) {
-  const hooks = db.prepare(
-    "SELECT * FROM webhooks WHERE user_id = ? AND active = 1"
-  ).all(userId) as Webhook[];
+  const hooks = await db.select().from(schema.webhooks)
+    .where(and(eq(schema.webhooks.userId, userId), eq(schema.webhooks.active, true)));
 
   const matching = hooks.filter((h) => h.events.split(",").includes(event));
   if (matching.length === 0) return;

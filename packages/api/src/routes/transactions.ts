@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import db from "../db";
+import { eq, and, gte, lte, desc, count, sql } from "drizzle-orm";
+import db, { schema } from "../db";
 import { logger } from "../logger";
 import type { Transaction, User } from "../types";
 import {
@@ -20,11 +21,18 @@ async function decryptTransaction(row: any, encKey: string): Promise<Transaction
     decryptField(row.card, encKey),
     decryptField(row.title, encKey),
   ]);
-  return { ...row, amount: amount!, seller: seller!, card, title };
+  return { ...row, amount: String(amount), seller: seller!, card, title };
 }
 
-async function decryptTransactions(rows: any[], encKey: string): Promise<Transaction[]> {
+async function decryptTransactions(rows: any[], encKey: string): Promise<any[]> {
   return Promise.all(rows.map((row) => decryptTransaction(row, encKey)));
+}
+
+function buildDateFilters(from?: string, to?: string) {
+  const conditions: any[] = [];
+  if (from) conditions.push(gte(schema.transactions.timestamp, from));
+  if (to) conditions.push(lte(schema.transactions.timestamp, to + " 23:59:59"));
+  return conditions;
 }
 
 transactions.post("/", async (c) => {
@@ -52,7 +60,7 @@ transactions.post("/", async (c) => {
   logger.info({ userId }, "parsed transaction");
 
   const user = c.get("user") as User;
-  const encKey = user.encryption_key!;
+  const encKey = user.encryptionKey!;
 
   const [encAmount, encSeller, encCard, encTitle] = await Promise.all([
     encryptField(amount, encKey),
@@ -61,15 +69,14 @@ transactions.post("/", async (c) => {
     encryptField(title, encKey),
   ]);
 
-  const stmt = db.prepare(`
-    INSERT INTO transactions (amount, seller, card, title, user_id)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-  const insertResult = stmt.run(encAmount, encSeller, encCard, encTitle, userId);
+  const [row] = await db.insert(schema.transactions).values({
+    amount: encAmount!,
+    seller: encSeller!,
+    card: encCard,
+    title: encTitle,
+    userId,
+  }).returning();
 
-  const row = db
-    .prepare("SELECT * FROM transactions WHERE id = ?")
-    .get(insertResult.lastInsertRowid) as any;
   const created = { ...row, amount, seller, card, title };
 
   logger.info({ id: created.id, userId }, "transaction created");
@@ -80,7 +87,7 @@ transactions.post("/", async (c) => {
 transactions.get("/stats", async (c) => {
   const userId = c.get("userId") as number;
   const user = c.get("user") as User;
-  const encKey = user.encryption_key!;
+  const encKey = user.encryptionKey!;
 
   const result = statsQuerySchema.safeParse(c.req.query());
   if (!result.success) return c.json({ error: result.error.flatten() }, 400);
@@ -88,27 +95,23 @@ transactions.get("/stats", async (c) => {
   const { from, to } = result.data;
   logger.debug({ from, to, userId }, "stats request");
 
-  let dateFilter = "";
-  const params: (string | number)[] = [userId];
-  if (from) { dateFilter += " AND timestamp >= ?"; params.push(from); }
-  if (to) { dateFilter += " AND timestamp <= ?"; params.push(to + " 23:59:59"); }
+  const dateFilters = buildDateFilters(from, to);
 
-  const rows = db.prepare(
-    `SELECT * FROM transactions WHERE user_id = ?${dateFilter}`
-  ).all(...params) as any[];
+  const rows = await db.select().from(schema.transactions)
+    .where(and(eq(schema.transactions.userId, userId), ...dateFilters));
 
   const txns = await decryptTransactions(rows, encKey);
 
-  const totalSpent = txns.reduce((sum, t) => sum + t.amount, 0);
-  const count = txns.length;
-  const avgTransaction = count > 0 ? Math.round((totalSpent / count) * 100) / 100 : 0;
+  const totalSpent = txns.reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0);
+  const txnCount = txns.length;
+  const avgTransaction = txnCount > 0 ? Math.round((totalSpent / txnCount) * 100) / 100 : 0;
 
-  // Top sellers
   const sellerMap = new Map<string, { count: number; total: number }>();
   for (const t of txns) {
+    const amt = parseFloat(t.amount);
     const s = sellerMap.get(t.seller) ?? { count: 0, total: 0 };
     s.count++;
-    s.total += t.amount;
+    s.total += amt;
     sellerMap.set(t.seller, s);
   }
   const topSellers = [...sellerMap.entries()]
@@ -116,22 +119,20 @@ transactions.get("/stats", async (c) => {
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);
 
-  // Daily totals
   const dailyMap = new Map<string, number>();
   for (const t of txns) {
-    const date = t.timestamp.slice(0, 10);
-    dailyMap.set(date, (dailyMap.get(date) ?? 0) + t.amount);
+    const date = typeof t.timestamp === "string" ? t.timestamp.slice(0, 10) : new Date(t.timestamp).toISOString().slice(0, 10);
+    dailyMap.set(date, (dailyMap.get(date) ?? 0) + parseFloat(t.amount));
   }
   const dailyTotals = [...dailyMap.entries()]
     .map(([date, total]) => ({ date, total }))
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 30);
 
-  // Card breakdown
   const cardMap = new Map<string, number>();
   for (const t of txns) {
     const card = t.card ?? "Unknown";
-    cardMap.set(card, (cardMap.get(card) ?? 0) + t.amount);
+    cardMap.set(card, (cardMap.get(card) ?? 0) + parseFloat(t.amount));
   }
   const cardTotal = [...cardMap.values()].reduce((a, b) => a + b, 0);
   const cardBreakdown = [...cardMap.entries()]
@@ -141,11 +142,11 @@ transactions.get("/stats", async (c) => {
     }))
     .sort((a, b) => b.total - a.total);
 
-  logger.info({ transaction_count: count, userId }, "stats computed");
+  logger.info({ transaction_count: txnCount, userId }, "stats computed");
 
   return c.json({
     total_spent: totalSpent,
-    transaction_count: count,
+    transaction_count: txnCount,
     avg_transaction: avgTransaction,
     top_sellers: topSellers,
     daily_totals: dailyTotals,
@@ -156,7 +157,7 @@ transactions.get("/stats", async (c) => {
 transactions.get("/", async (c) => {
   const userId = c.get("userId") as number;
   const user = c.get("user") as User;
-  const encKey = user.encryption_key!;
+  const encKey = user.encryptionKey!;
 
   const result = listTransactionsSchema.safeParse(c.req.query());
   if (!result.success) {
@@ -166,55 +167,36 @@ transactions.get("/", async (c) => {
   const { limit, offset, from, to } = result.data;
   logger.debug({ limit, offset, from, to, userId }, "list transactions request");
 
-  let dateFilter = "";
-  const params: (string | number)[] = [userId];
-  if (from) {
-    dateFilter += " AND timestamp >= ?";
-    params.push(from);
-  }
-  if (to) {
-    dateFilter += " AND timestamp <= ?";
-    params.push(to + " 23:59:59");
-  }
+  const dateFilters = buildDateFilters(from, to);
+  const whereClause = and(eq(schema.transactions.userId, userId), ...dateFilters);
 
-  const countParams = [...params];
-  const totalRow = db.prepare(
-    `SELECT COUNT(*) as count FROM transactions WHERE user_id = ?${dateFilter}`
-  ).get(...countParams) as { count: number };
+  const [totalRow] = await db.select({ count: count() }).from(schema.transactions).where(whereClause);
 
-  params.push(limit, offset);
-  const rows = db.prepare(
-    `SELECT * FROM transactions WHERE user_id = ?${dateFilter} ORDER BY timestamp DESC LIMIT ? OFFSET ?`
-  ).all(...params) as any[];
+  const rows = await db.select().from(schema.transactions)
+    .where(whereClause)
+    .orderBy(desc(schema.transactions.timestamp))
+    .limit(limit)
+    .offset(offset);
 
-  const transactions_list = await decryptTransactions(rows, encKey);
+  const txnList = await decryptTransactions(rows, encKey);
 
-  logger.info({ total: totalRow.count, returned: transactions_list.length, userId }, "list transactions response");
-  return c.json({ transactions: transactions_list, total: totalRow.count });
+  logger.info({ total: totalRow.count, returned: txnList.length, userId }, "list transactions response");
+  return c.json({ transactions: txnList, total: totalRow.count });
 });
 
 transactions.get("/export", async (c) => {
   const userId = c.get("userId") as number;
   const user = c.get("user") as User;
-  const encKey = user.encryption_key!;
+  const encKey = user.encryptionKey!;
   const format = c.req.query("format") ?? "csv";
   const from = c.req.query("from");
   const to = c.req.query("to");
 
-  let dateFilter = "";
-  const params: (string | number)[] = [userId];
-  if (from) {
-    dateFilter += " AND timestamp >= ?";
-    params.push(from);
-  }
-  if (to) {
-    dateFilter += " AND timestamp <= ?";
-    params.push(to + " 23:59:59");
-  }
+  const dateFilters = buildDateFilters(from ?? undefined, to ?? undefined);
 
-  const rows = db.prepare(
-    `SELECT * FROM transactions WHERE user_id = ?${dateFilter} ORDER BY timestamp DESC`
-  ).all(...params) as any[];
+  const rows = await db.select().from(schema.transactions)
+    .where(and(eq(schema.transactions.userId, userId), ...dateFilters))
+    .orderBy(desc(schema.transactions.timestamp));
 
   const txns = await decryptTransactions(rows, encKey);
 
@@ -230,7 +212,7 @@ transactions.get("/export", async (c) => {
   }
 
   const header = "id,amount,seller,card,title,timestamp";
-  const csvRows = txns.map((r) => {
+  const csvRows = txns.map((r: any) => {
     const escape = (v: string | null) => {
       if (v == null) return "";
       if (v.includes(",") || v.includes('"') || v.includes("\n")) return `"${v.replace(/"/g, '""')}"`;
@@ -251,7 +233,7 @@ transactions.get("/export", async (c) => {
 transactions.delete("/:id", async (c) => {
   const userId = c.get("userId") as number;
   const user = c.get("user") as User;
-  const encKey = user.encryption_key!;
+  const encKey = user.encryptionKey!;
 
   const result = idParamSchema.safeParse({ id: c.req.param("id") });
   if (!result.success) {
@@ -259,13 +241,15 @@ transactions.delete("/:id", async (c) => {
   }
 
   const { id } = result.data;
-  const existing = db.prepare("SELECT * FROM transactions WHERE id = ? AND user_id = ?").get(id, userId) as any;
+  const [existing] = await db.select().from(schema.transactions)
+    .where(and(eq(schema.transactions.id, id), eq(schema.transactions.userId, userId)));
   if (!existing) {
     logger.warn({ id, userId }, "transaction not found for deletion");
     return c.json({ error: "Transaction not found" }, 404);
   }
   const decrypted = await decryptTransaction(existing, encKey);
-  db.prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?").run(id, userId);
+  await db.delete(schema.transactions)
+    .where(and(eq(schema.transactions.id, id), eq(schema.transactions.userId, userId)));
   logger.info({ id, userId }, "transaction deleted");
   fireWebhooks(userId, "transaction.deleted", { transaction: decrypted });
   return c.json({ success: true });

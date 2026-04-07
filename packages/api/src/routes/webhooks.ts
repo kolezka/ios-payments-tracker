@@ -1,14 +1,16 @@
 import { Hono } from "hono";
-import db from "../db";
+import { eq, and, desc } from "drizzle-orm";
+import db, { schema } from "../db";
 import { logger } from "../logger";
 import type { Webhook } from "../types";
 
 const webhooks = new Hono();
 
-webhooks.get("/", (c) => {
+webhooks.get("/", async (c) => {
   const userId = c.get("userId") as number;
-  const rows = db.prepare("SELECT * FROM webhooks WHERE user_id = ? ORDER BY created_at DESC").all(userId) as Webhook[];
-  // Mask secrets in response
+  const rows = await db.select().from(schema.webhooks)
+    .where(eq(schema.webhooks.userId, userId))
+    .orderBy(desc(schema.webhooks.createdAt));
   const safe = rows.map(({ secret, ...rest }) => ({ ...rest, has_secret: !!secret }));
   return c.json(safe);
 });
@@ -22,11 +24,7 @@ webhooks.post("/", async (c) => {
     return c.json({ error: "url is required" }, 400);
   }
 
-  try {
-    new URL(url);
-  } catch {
-    return c.json({ error: "Invalid URL" }, 400);
-  }
+  try { new URL(url); } catch { return c.json({ error: "Invalid URL" }, 400); }
 
   const eventList = events ?? "transaction.created";
   const validEvents = ["transaction.created", "transaction.deleted"];
@@ -35,26 +33,26 @@ webhooks.post("/", async (c) => {
     return c.json({ error: `Invalid events. Valid: ${validEvents.join(", ")}` }, 400);
   }
 
-  const result = db.prepare(
-    "INSERT INTO webhooks (user_id, url, events, secret) VALUES (?, ?, ?, ?)"
-  ).run(userId, url, parsed.join(","), secret ?? null);
+  const [created] = await db.insert(schema.webhooks).values({
+    userId, url, events: parsed.join(","), secret: secret ?? null,
+  }).returning();
 
-  const created = db.prepare("SELECT * FROM webhooks WHERE id = ?").get(result.lastInsertRowid) as Webhook;
   logger.info({ webhookId: created.id, url, events: parsed, userId }, "webhook created");
 
   const { secret: _, ...safe } = created;
   return c.json({ ...safe, has_secret: !!created.secret }, 201);
 });
 
-webhooks.delete("/:id", (c) => {
+webhooks.delete("/:id", async (c) => {
   const userId = c.get("userId") as number;
   const id = parseInt(c.req.param("id"));
   if (isNaN(id)) return c.json({ error: "Invalid ID" }, 400);
 
-  const existing = db.prepare("SELECT id FROM webhooks WHERE id = ? AND user_id = ?").get(id, userId);
+  const [existing] = await db.select({ id: schema.webhooks.id }).from(schema.webhooks)
+    .where(and(eq(schema.webhooks.id, id), eq(schema.webhooks.userId, userId)));
   if (!existing) return c.json({ error: "Webhook not found" }, 404);
 
-  db.prepare("DELETE FROM webhooks WHERE id = ? AND user_id = ?").run(id, userId);
+  await db.delete(schema.webhooks).where(and(eq(schema.webhooks.id, id), eq(schema.webhooks.userId, userId)));
   logger.info({ webhookId: id, userId }, "webhook deleted");
   return c.json({ success: true });
 });
@@ -64,18 +62,19 @@ webhooks.patch("/:id", async (c) => {
   const id = parseInt(c.req.param("id"));
   if (isNaN(id)) return c.json({ error: "Invalid ID" }, 400);
 
-  const existing = db.prepare("SELECT * FROM webhooks WHERE id = ? AND user_id = ?").get(id, userId) as Webhook | null;
+  const [existing] = await db.select().from(schema.webhooks)
+    .where(and(eq(schema.webhooks.id, id), eq(schema.webhooks.userId, userId)));
   if (!existing) return c.json({ error: "Webhook not found" }, 404);
 
   const body = await c.req.json();
   const { active } = body as { active?: boolean };
 
   if (active !== undefined) {
-    db.prepare("UPDATE webhooks SET active = ? WHERE id = ?").run(active ? 1 : 0, id);
+    await db.update(schema.webhooks).set({ active }).where(eq(schema.webhooks.id, id));
     logger.info({ webhookId: id, active, userId }, "webhook toggled");
   }
 
-  const updated = db.prepare("SELECT * FROM webhooks WHERE id = ?").get(id) as Webhook;
+  const [updated] = await db.select().from(schema.webhooks).where(eq(schema.webhooks.id, id));
   const { secret: _, ...safe } = updated;
   return c.json({ ...safe, has_secret: !!updated.secret });
 });

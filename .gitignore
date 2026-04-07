@@ -1,9 +1,8 @@
 node_modules/
 .svelte-kit/
 build/
-data/*.db
-data/*.db-shm
-data/*.db-wal
+data/
+packages/api/dist/
 .env
 .DS_Store
 .claude/settings.local.json

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import db from "../db";
+import { eq, and } from "drizzle-orm";
+import db, { schema } from "../db";
 import { logger } from "../logger";
 import { sendMagicLinkEmail } from "../mail";
 import { magicLinkSchema, updateNameSchema } from "../schemas";
@@ -19,7 +20,7 @@ auth.post("/magic-link", async (c) => {
   const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-  db.prepare("INSERT INTO magic_links (email, token, expires_at) VALUES (?, ?, ?)").run(email, token, expiresAt);
+  await db.insert(schema.magicLinks).values({ email, token, expiresAt });
 
   try {
     await sendMagicLinkEmail(email, token);
@@ -38,33 +39,33 @@ auth.get("/verify", async (c) => {
     return c.json({ error: "Token is required" }, 400);
   }
 
-  const link = db.prepare(
-    "SELECT * FROM magic_links WHERE token = ? AND used = 0"
-  ).get(token) as { email: string; expires_at: string; id: number } | null;
+  const [link] = await db.select().from(schema.magicLinks)
+    .where(and(eq(schema.magicLinks.token, token), eq(schema.magicLinks.used, 0)));
 
   if (!link) {
     return c.json({ error: "Invalid or expired link" }, 400);
   }
 
-  if (new Date(link.expires_at) < new Date()) {
+  if (new Date(link.expiresAt) < new Date()) {
     return c.json({ error: "Link has expired" }, 400);
   }
 
-  db.prepare("UPDATE magic_links SET used = 1 WHERE id = ?").run(link.id);
+  await db.update(schema.magicLinks).set({ used: 1 }).where(eq(schema.magicLinks.id, link.id));
 
-  let user = db.prepare("SELECT * FROM users WHERE email = ?").get(link.email) as User | null;
+  let [user] = await db.select().from(schema.users).where(eq(schema.users.email, link.email));
 
   if (!user) {
     const apiToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
     const encKey = await generateEncryptionKey();
-    db.prepare("INSERT INTO users (email, name, api_token, encryption_key) VALUES (?, ?, ?, ?)").run(link.email, "", apiToken, encKey);
-    user = db.prepare("SELECT * FROM users WHERE email = ?").get(link.email) as User;
+    [user] = await db.insert(schema.users).values({
+      email: link.email, name: "", apiToken, encryptionKey: encKey,
+    }).returning();
     logger.info({ email: link.email, userId: user.id }, "new user created via magic link");
   } else {
     logger.info({ email: link.email, userId: user.id }, "existing user logged in via magic link");
   }
 
-  return c.json({ api_token: user.api_token, is_new: user.name === "" });
+  return c.json({ api_token: user.apiToken, is_new: user.name === "" });
 });
 
 auth.get("/github", (c) => {
@@ -125,32 +126,34 @@ auth.post("/github/callback", async (c) => {
   const ghIdStr = String(ghUser.id);
   const name = ghUser.name ?? ghUser.login;
 
-  let user = db.prepare("SELECT * FROM users WHERE github_id = ?").get(ghIdStr) as User | null;
+  let [user] = await db.select().from(schema.users).where(eq(schema.users.githubId, ghIdStr));
   if (!user) {
-    user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User | null;
+    [user] = await db.select().from(schema.users).where(eq(schema.users.email, email));
     if (user) {
-      db.prepare("UPDATE users SET github_id = ?, name = CASE WHEN name = '' THEN ? ELSE name END WHERE id = ?")
-        .run(ghIdStr, name, user.id);
+      await db.update(schema.users).set({
+        githubId: ghIdStr,
+        name: user.name === "" ? name : user.name,
+      }).where(eq(schema.users.id, user.id));
     }
   }
 
   if (!user) {
     const apiToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
     const encKey = await generateEncryptionKey();
-    db.prepare("INSERT INTO users (email, name, github_id, api_token, encryption_key) VALUES (?, ?, ?, ?, ?)")
-      .run(email, name, ghIdStr, apiToken, encKey);
-    user = db.prepare("SELECT * FROM users WHERE github_id = ?").get(ghIdStr) as User;
+    [user] = await db.insert(schema.users).values({
+      email, name, githubId: ghIdStr, apiToken, encryptionKey: encKey,
+    }).returning();
     logger.info({ email, githubId: ghIdStr, userId: user.id }, "new user created via GitHub");
   } else {
     logger.info({ email, githubId: ghIdStr, userId: user.id }, "existing user logged in via GitHub");
   }
 
-  return c.json({ api_token: user.api_token, is_new: false });
+  return c.json({ api_token: user.apiToken, is_new: false });
 });
 
 auth.patch("/me", async (c) => {
   const token = c.req.header("Authorization")?.replace("Bearer ", "");
-  const user = db.prepare("SELECT * FROM users WHERE api_token = ?").get(token) as User | null;
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.apiToken, token ?? ""));
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
   }
@@ -161,14 +164,20 @@ auth.patch("/me", async (c) => {
     return c.json({ error: result.error.flatten() }, 400);
   }
 
-  db.prepare("UPDATE users SET name = ? WHERE id = ?").run(result.data.name, user.id);
+  await db.update(schema.users).set({ name: result.data.name }).where(eq(schema.users.id, user.id));
   logger.info({ userId: user.id, name: result.data.name }, "user name updated");
   return c.json({ success: true });
 });
 
-auth.get("/me", (c) => {
+auth.get("/me", async (c) => {
   const token = c.req.header("Authorization")?.replace("Bearer ", "");
-  const user = db.prepare("SELECT id, email, name, api_token, created_at FROM users WHERE api_token = ?").get(token) as Omit<User, "github_id"> | null;
+  const [user] = await db.select({
+    id: schema.users.id,
+    email: schema.users.email,
+    name: schema.users.name,
+    api_token: schema.users.apiToken,
+    created_at: schema.users.createdAt,
+  }).from(schema.users).where(eq(schema.users.apiToken, token ?? ""));
   if (!user) {
     return c.json({ error: "Unauthorized" }, 401);
   }
