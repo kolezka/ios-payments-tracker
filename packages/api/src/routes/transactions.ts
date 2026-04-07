@@ -40,7 +40,7 @@ transactions.post("/", async (c) => {
   }
 
   const contentType = c.req.header("Content-Type");
-  logger.info({ contentType, body }, "incoming transaction");
+  logger.info({ contentType }, "incoming transaction");
 
   const result = createTransactionSchema.safeParse(body);
   if (!result.success) {
@@ -49,7 +49,7 @@ transactions.post("/", async (c) => {
   }
 
   const { amount, seller, card, title } = result.data;
-  logger.info({ amount, seller, card, title, userId }, "parsed transaction");
+  logger.info({ userId }, "parsed transaction");
 
   const user = c.get("user") as User;
   const encKey = user.encryption_key!;
@@ -72,7 +72,7 @@ transactions.post("/", async (c) => {
     .get(insertResult.lastInsertRowid) as any;
   const created = { ...row, amount, seller, card, title };
 
-  logger.info({ id: created.id, amount, seller, userId }, "transaction created");
+  logger.info({ id: created.id, userId }, "transaction created");
   fireWebhooks(userId, "transaction.created", { transaction: created });
   return c.json(created, 201);
 });
