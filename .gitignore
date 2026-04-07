@@ -12,6 +12,7 @@ packages/api/dist/
 playwright-report/
 test-results/
 *.png
+!docs/screenshots/*.png
 logs/
 .worktrees/
 .superpowers/

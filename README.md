@@ -2,6 +2,10 @@
 
 A self-hosted payment tracking app with AES-256-GCM encryption. Accepts transactions from Apple Wallet via iOS Shortcuts and displays them in a glassmorphic dashboard.
 
+![Landing Page](docs/screenshots/landing.png)
+
+![Dashboard](docs/screenshots/dashboard.png)
+
 **Stack:** Bun, Hono, Drizzle ORM, PostgreSQL, SvelteKit, Tailwind CSS
 
 **Currency:** PLN (Polish zloty) — hardcoded in formatting
