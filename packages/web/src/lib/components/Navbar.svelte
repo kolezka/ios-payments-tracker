@@ -24,7 +24,7 @@
 
 {#if user}
   <div class="sticky top-0 z-50 px-5 py-3" style="background: linear-gradient(180deg, rgba(8,10,16,0.95) 0%, rgba(8,10,16,0.6) 70%, transparent 100%);">
-    <nav class="glass-strong flex items-center justify-between max-w-[calc(56rem-2.5rem)] mx-auto px-4 py-2">
+    <nav class="glass-strong flex items-center justify-between max-w-[calc(56rem-2.5rem)] mx-auto px-4 py-2 relative">
       <!-- Logo + Brand -->
       <a href="/" class="flex items-center gap-2.5 group">
         <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/20 flex items-center justify-center group-hover:from-indigo-500/30 group-hover:to-purple-500/30 transition-all">
@@ -38,8 +38,8 @@
         <span class="text-sm font-semibold text-text-primary tracking-tight hidden sm:block">Payment Tracker</span>
       </a>
 
-      <!-- Nav links (desktop) -->
-      <div class="hidden sm:flex items-center gap-1">
+      <!-- Nav links (desktop, centered) -->
+      <div class="hidden sm:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
         <a href="/" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {$page.url.pathname === '/' ? 'text-accent bg-indigo-500/10' : 'text-text-muted hover:text-text-secondary'}">
           Dashboard
         </a>
