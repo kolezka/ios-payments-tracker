@@ -20,33 +20,40 @@
 {#if data.authenticated}
   <!-- Dashboard -->
   <div class="max-w-4xl mx-auto px-5 pb-12">
-    <div class="grid grid-cols-2 gap-3 mb-6">
-      <BarChart dailyTotals={data.stats.daily_totals ?? []} />
-      <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
-    </div>
-
-    <FilterBar filters={data.filters} />
-
+    <!-- Top grid: shortcut widget spans left, charts stack right -->
     {#if data.showShortcutWidget && data.dayGroups.length === 0}
-      <div class="glass p-5 mb-6">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div class="glass p-5 sm:row-span-2 flex flex-col justify-center">
+          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center mb-3">
             <svg class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
             </svg>
           </div>
-          <div class="flex-1 min-w-0">
-            <h3 class="text-sm font-semibold text-text-primary mb-1">Set up iOS Shortcut</h3>
-            <p class="text-xs text-text-secondary leading-relaxed mb-3">Connect your iPhone to automatically track payments from Apple Wallet.</p>
-            <a href="/setup"
-              class="inline-flex px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-semibold transition-colors">
-              Set up now
-            </a>
-          </div>
+          <h3 class="text-sm font-semibold text-text-primary mb-1">Set up iOS Shortcut</h3>
+          <p class="text-xs text-text-secondary leading-relaxed mb-4">Connect your iPhone to automatically track payments from Apple Wallet.</p>
+          <a href="/setup"
+            class="inline-flex w-fit px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-semibold transition-colors">
+            Set up now
+          </a>
         </div>
+        <div class="sm:col-span-2">
+          <BarChart dailyTotals={data.stats.daily_totals ?? []} />
+        </div>
+        <div class="sm:col-span-2">
+          <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
+        </div>
+      </div>
+    {:else}
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <BarChart dailyTotals={data.stats.daily_totals ?? []} />
+        <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
       </div>
     {/if}
 
+    <!-- Filter bar -->
+    <FilterBar filters={data.filters} />
+
+    <!-- Transactions -->
     {#if data.dayGroups.length === 0}
       <div class="text-center py-12 text-text-muted text-sm">No transactions yet</div>
     {:else}
