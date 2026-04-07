@@ -29,7 +29,7 @@
 
     <!-- Quick action widgets -->
     {#if data.showShortcutWidget && data.dayGroups.length === 0}
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <a href="/setup" class="glass p-4 flex items-center gap-3.5 group hover:border-indigo-500/20 transition-all">
           <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/15 transition-colors">
             <svg class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -53,6 +53,19 @@
           <div class="flex-1 min-w-0">
             <h3 class="text-sm font-semibold text-text-primary mb-0.5">Export Data</h3>
             <p class="text-xs text-text-muted leading-relaxed">Download as CSV or JSON</p>
+          </div>
+          <svg class="w-4 h-4 text-text-dim group-hover:text-accent transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+
+        <a href="/settings" class="glass p-4 flex items-center gap-3.5 group hover:border-emerald-500/20 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/15 transition-colors">
+            <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-sm font-semibold text-text-primary mb-0.5">Webhooks</h3>
+            <p class="text-xs text-text-muted leading-relaxed">Notify external services</p>
           </div>
           <svg class="w-4 h-4 text-text-dim group-hover:text-accent transition-colors shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
