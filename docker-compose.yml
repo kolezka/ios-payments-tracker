@@ -11,7 +11,7 @@ services:
       - "5432:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +25,7 @@ services:
       - PORT=3010
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - DEV_MODE=${DEV_MODE:-false}
-      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-payment_tracker}
+      - DATABASE_URL=${DATABASE_URL:-postgres://postgres:postgres@db:5432/payment_tracker}
       - BASE_URL=${SERVICE_URL_WEB:-http://localhost:3011}
       - WEB_ORIGIN=${SERVICE_URL_WEB:-http://localhost:3011}
       - SMTP_HOST=${SMTP_HOST:-}
