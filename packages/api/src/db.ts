@@ -23,6 +23,12 @@ db.run(`
   )
 `);
 
+// Add encryption_key column if not exists (migration)
+const userColumns = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
+if (!userColumns.some((c) => c.name === "encryption_key")) {
+  db.run("ALTER TABLE users ADD COLUMN encryption_key TEXT");
+}
+
 db.run(`
   CREATE TABLE IF NOT EXISTS magic_links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +51,8 @@ db.run(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
+// For existing databases: amount was REAL, now stores encrypted TEXT.
+// SQLite is dynamically typed so no ALTER needed — existing REAL column accepts TEXT values.
 
 db.run(`
   CREATE TABLE IF NOT EXISTS webhooks (

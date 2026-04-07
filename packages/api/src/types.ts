@@ -4,6 +4,7 @@ export interface User {
   name: string;
   github_id: string | null;
   api_token: string;
+  encryption_key: string | null;
   created_at: string;
 }
 
