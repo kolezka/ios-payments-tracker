@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import db from "../db";
 import { logger } from "../logger";
-import type { Transaction } from "../types";
+import type { Transaction, User } from "../types";
 import {
   createTransactionSchema,
   listTransactionsSchema,
@@ -9,8 +9,23 @@ import {
   idParamSchema,
 } from "../schemas";
 import { fireWebhooks } from "../webhooks";
+import { encryptField, decryptField, decryptNumber } from "../crypto";
 
 const transactions = new Hono();
+
+async function decryptTransaction(row: any, encKey: string): Promise<Transaction> {
+  const [amount, seller, card, title] = await Promise.all([
+    decryptNumber(row.amount, encKey),
+    decryptField(row.seller, encKey),
+    decryptField(row.card, encKey),
+    decryptField(row.title, encKey),
+  ]);
+  return { ...row, amount: amount!, seller: seller!, card, title };
+}
+
+async function decryptTransactions(rows: any[], encKey: string): Promise<Transaction[]> {
+  return Promise.all(rows.map((row) => decryptTransaction(row, encKey)));
+}
 
 transactions.post("/", async (c) => {
   const userId = c.get("userId") as number;
@@ -36,86 +51,113 @@ transactions.post("/", async (c) => {
   const { amount, seller, card, title } = result.data;
   logger.info({ amount, seller, card, title, userId }, "parsed transaction");
 
+  const user = c.get("user") as User;
+  const encKey = user.encryption_key!;
+
+  const [encAmount, encSeller, encCard, encTitle] = await Promise.all([
+    encryptField(amount, encKey),
+    encryptField(seller, encKey),
+    encryptField(card, encKey),
+    encryptField(title, encKey),
+  ]);
+
   const stmt = db.prepare(`
     INSERT INTO transactions (amount, seller, card, title, user_id)
     VALUES (?, ?, ?, ?, ?)
   `);
-  const insertResult = stmt.run(amount, seller, card, title, userId);
+  const insertResult = stmt.run(encAmount, encSeller, encCard, encTitle, userId);
 
-  const created = db
+  const row = db
     .prepare("SELECT * FROM transactions WHERE id = ?")
-    .get(insertResult.lastInsertRowid) as Transaction;
+    .get(insertResult.lastInsertRowid) as any;
+  const created = { ...row, amount, seller, card, title };
 
   logger.info({ id: created.id, amount, seller, userId }, "transaction created");
   fireWebhooks(userId, "transaction.created", { transaction: created });
   return c.json(created, 201);
 });
 
-transactions.get("/stats", (c) => {
+transactions.get("/stats", async (c) => {
   const userId = c.get("userId") as number;
+  const user = c.get("user") as User;
+  const encKey = user.encryption_key!;
+
   const result = statsQuerySchema.safeParse(c.req.query());
-  if (!result.success) {
-    return c.json({ error: result.error.flatten() }, 400);
-  }
+  if (!result.success) return c.json({ error: result.error.flatten() }, 400);
 
   const { from, to } = result.data;
   logger.debug({ from, to, userId }, "stats request");
 
   let dateFilter = "";
   const params: (string | number)[] = [userId];
-  if (from) {
-    dateFilter += " AND timestamp >= ?";
-    params.push(from);
+  if (from) { dateFilter += " AND timestamp >= ?"; params.push(from); }
+  if (to) { dateFilter += " AND timestamp <= ?"; params.push(to + " 23:59:59"); }
+
+  const rows = db.prepare(
+    `SELECT * FROM transactions WHERE user_id = ?${dateFilter}`
+  ).all(...params) as any[];
+
+  const txns = await decryptTransactions(rows, encKey);
+
+  const totalSpent = txns.reduce((sum, t) => sum + t.amount, 0);
+  const count = txns.length;
+  const avgTransaction = count > 0 ? Math.round((totalSpent / count) * 100) / 100 : 0;
+
+  // Top sellers
+  const sellerMap = new Map<string, { count: number; total: number }>();
+  for (const t of txns) {
+    const s = sellerMap.get(t.seller) ?? { count: 0, total: 0 };
+    s.count++;
+    s.total += t.amount;
+    sellerMap.set(t.seller, s);
   }
-  if (to) {
-    dateFilter += " AND timestamp <= ?";
-    params.push(to + " 23:59:59");
+  const topSellers = [...sellerMap.entries()]
+    .map(([seller, v]) => ({ seller, count: v.count, total: v.total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  // Daily totals
+  const dailyMap = new Map<string, number>();
+  for (const t of txns) {
+    const date = t.timestamp.slice(0, 10);
+    dailyMap.set(date, (dailyMap.get(date) ?? 0) + t.amount);
   }
+  const dailyTotals = [...dailyMap.entries()]
+    .map(([date, total]) => ({ date, total }))
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 30);
 
-  const summary = db.prepare(
-    `SELECT COALESCE(SUM(amount), 0) as total_spent, COUNT(*) as transaction_count, COALESCE(AVG(amount), 0) as avg_transaction
-     FROM transactions WHERE user_id = ?${dateFilter}`
-  ).get(...params) as { total_spent: number; transaction_count: number; avg_transaction: number };
+  // Card breakdown
+  const cardMap = new Map<string, number>();
+  for (const t of txns) {
+    const card = t.card ?? "Unknown";
+    cardMap.set(card, (cardMap.get(card) ?? 0) + t.amount);
+  }
+  const cardTotal = [...cardMap.values()].reduce((a, b) => a + b, 0);
+  const cardBreakdown = [...cardMap.entries()]
+    .map(([card, total]) => ({
+      card, total,
+      percentage: cardTotal > 0 ? Math.round((total / cardTotal) * 100) : 0,
+    }))
+    .sort((a, b) => b.total - a.total);
 
-  const topSellers = db.prepare(
-    `SELECT seller, COUNT(*) as count, SUM(amount) as total
-     FROM transactions WHERE user_id = ?${dateFilter}
-     GROUP BY seller ORDER BY total DESC LIMIT 10`
-  ).all(...params) as { seller: string; count: number; total: number }[];
-
-  const dailyTotals = db.prepare(
-    `SELECT DATE(timestamp) as date, SUM(amount) as total
-     FROM transactions WHERE user_id = ?${dateFilter}
-     GROUP BY DATE(timestamp) ORDER BY date DESC LIMIT 30`
-  ).all(...params) as { date: string; total: number }[];
-
-  const cardBreakdown = db.prepare(
-    `SELECT COALESCE(card, 'Unknown') as card, SUM(amount) as total
-     FROM transactions WHERE user_id = ?${dateFilter}
-     GROUP BY card ORDER BY total DESC`
-  ).all(...params) as { card: string; total: number }[];
-
-  const cardTotal = cardBreakdown.reduce((sum, c) => sum + c.total, 0);
-  const cardWithPct = cardBreakdown.map((c) => ({
-    card: c.card,
-    total: c.total,
-    percentage: cardTotal > 0 ? Math.round((c.total / cardTotal) * 100) : 0,
-  }));
-
-  logger.info({ transaction_count: summary.transaction_count, userId }, "stats computed");
+  logger.info({ transaction_count: count, userId }, "stats computed");
 
   return c.json({
-    total_spent: summary.total_spent,
-    transaction_count: summary.transaction_count,
-    avg_transaction: Math.round(summary.avg_transaction * 100) / 100,
+    total_spent: totalSpent,
+    transaction_count: count,
+    avg_transaction: avgTransaction,
     top_sellers: topSellers,
     daily_totals: dailyTotals,
-    card_breakdown: cardWithPct,
+    card_breakdown: cardBreakdown,
   });
 });
 
-transactions.get("/", (c) => {
+transactions.get("/", async (c) => {
   const userId = c.get("userId") as number;
+  const user = c.get("user") as User;
+  const encKey = user.encryption_key!;
+
   const result = listTransactionsSchema.safeParse(c.req.query());
   if (!result.success) {
     return c.json({ error: result.error.flatten() }, 400);
@@ -143,14 +185,18 @@ transactions.get("/", (c) => {
   params.push(limit, offset);
   const rows = db.prepare(
     `SELECT * FROM transactions WHERE user_id = ?${dateFilter} ORDER BY timestamp DESC LIMIT ? OFFSET ?`
-  ).all(...params) as Transaction[];
+  ).all(...params) as any[];
 
-  logger.info({ total: totalRow.count, returned: rows.length, userId }, "list transactions response");
-  return c.json({ transactions: rows, total: totalRow.count });
+  const transactions_list = await decryptTransactions(rows, encKey);
+
+  logger.info({ total: totalRow.count, returned: transactions_list.length, userId }, "list transactions response");
+  return c.json({ transactions: transactions_list, total: totalRow.count });
 });
 
-transactions.get("/export", (c) => {
+transactions.get("/export", async (c) => {
   const userId = c.get("userId") as number;
+  const user = c.get("user") as User;
+  const encKey = user.encryption_key!;
   const format = c.req.query("format") ?? "csv";
   const from = c.req.query("from");
   const to = c.req.query("to");
@@ -168,12 +214,14 @@ transactions.get("/export", (c) => {
 
   const rows = db.prepare(
     `SELECT * FROM transactions WHERE user_id = ?${dateFilter} ORDER BY timestamp DESC`
-  ).all(...params) as Transaction[];
+  ).all(...params) as any[];
 
-  logger.info({ format, count: rows.length, userId }, "export transactions");
+  const txns = await decryptTransactions(rows, encKey);
+
+  logger.info({ format, count: txns.length, userId }, "export transactions");
 
   if (format === "json") {
-    return new Response(JSON.stringify(rows, null, 2), {
+    return new Response(JSON.stringify(txns, null, 2), {
       headers: {
         "Content-Type": "application/json",
         "Content-Disposition": 'attachment; filename="transactions.json"',
@@ -182,7 +230,7 @@ transactions.get("/export", (c) => {
   }
 
   const header = "id,amount,seller,card,title,timestamp";
-  const csvRows = rows.map((r) => {
+  const csvRows = txns.map((r) => {
     const escape = (v: string | null) => {
       if (v == null) return "";
       if (v.includes(",") || v.includes('"') || v.includes("\n")) return `"${v.replace(/"/g, '""')}"`;
@@ -200,23 +248,26 @@ transactions.get("/export", (c) => {
   });
 });
 
-transactions.delete("/:id", (c) => {
+transactions.delete("/:id", async (c) => {
   const userId = c.get("userId") as number;
+  const user = c.get("user") as User;
+  const encKey = user.encryption_key!;
+
   const result = idParamSchema.safeParse({ id: c.req.param("id") });
   if (!result.success) {
     return c.json({ error: "Invalid transaction ID" }, 400);
   }
 
   const { id } = result.data;
-  const existing = db.prepare("SELECT id FROM transactions WHERE id = ? AND user_id = ?").get(id, userId);
+  const existing = db.prepare("SELECT * FROM transactions WHERE id = ? AND user_id = ?").get(id, userId) as any;
   if (!existing) {
     logger.warn({ id, userId }, "transaction not found for deletion");
     return c.json({ error: "Transaction not found" }, 404);
   }
-  const toDelete = db.prepare("SELECT * FROM transactions WHERE id = ? AND user_id = ?").get(id, userId) as Transaction;
+  const decrypted = await decryptTransaction(existing, encKey);
   db.prepare("DELETE FROM transactions WHERE id = ? AND user_id = ?").run(id, userId);
   logger.info({ id, userId }, "transaction deleted");
-  fireWebhooks(userId, "transaction.deleted", { transaction: toDelete });
+  fireWebhooks(userId, "transaction.deleted", { transaction: decrypted });
   return c.json({ success: true });
 });
 
