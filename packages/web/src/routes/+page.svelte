@@ -19,7 +19,7 @@
 
 {#if data.authenticated}
   <!-- Dashboard -->
-  <div class="max-w-5xl mx-auto px-5 pb-12">
+  <div class="max-w-4xl mx-auto px-5 pb-12">
     <div class="grid grid-cols-2 gap-3 mb-6">
       <BarChart dailyTotals={data.stats.daily_totals ?? []} />
       <DonutChart cardBreakdown={data.stats.card_breakdown ?? []} />
