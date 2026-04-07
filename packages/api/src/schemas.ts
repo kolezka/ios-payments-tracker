@@ -11,9 +11,9 @@ export const createTransactionSchema = z.object({
     },
     z.number().positive("amount must be positive")
   ),
-  seller: z.string().min(1, "seller is required"),
-  card: z.string().nullish().default(null),
-  title: z.string().nullish().default(null),
+  seller: z.string().min(1).nullish().default("Unknown"),
+  card: z.string().nullish().default("Unknown"),
+  title: z.string().nullish().default("Unknown"),
 });
 
 export const listTransactionsSchema = z.object({
