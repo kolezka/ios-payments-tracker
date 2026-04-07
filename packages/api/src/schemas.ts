@@ -43,3 +43,18 @@ export const verifyTokenSchema = z.object({
 export const updateNameSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
 });
+
+const validWebhookEvents = ["transaction.created", "transaction.deleted"] as const;
+
+export const createWebhookSchema = z.object({
+  url: z.string().url("Invalid URL"),
+  events: z.string().default("transaction.created").refine(
+    (val) => val.split(",").every((e) => validWebhookEvents.includes(e.trim() as any)),
+    { message: `Invalid events. Valid: ${validWebhookEvents.join(", ")}` }
+  ),
+  secret: z.string().nullish(),
+});
+
+export const updateWebhookSchema = z.object({
+  active: z.boolean(),
+});

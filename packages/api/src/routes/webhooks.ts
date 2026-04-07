@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { eq, and, desc } from "drizzle-orm";
 import db, { schema } from "../db";
 import { logger } from "../logger";
+import { createWebhookSchema, updateWebhookSchema, idParamSchema } from "../schemas";
 
 const webhooks = new Hono();
 
@@ -17,26 +18,18 @@ webhooks.get("/", async (c) => {
 webhooks.post("/", async (c) => {
   const userId = c.get("userId") as number;
   const body = await c.req.json();
-  const { url, events, secret } = body as { url?: string; events?: string; secret?: string };
-
-  if (!url || typeof url !== "string") {
-    return c.json({ error: "url is required" }, 400);
+  const result = createWebhookSchema.safeParse(body);
+  if (!result.success) {
+    return c.json({ error: result.error.flatten() }, 400);
   }
 
-  try { new URL(url); } catch { return c.json({ error: "Invalid URL" }, 400); }
-
-  const eventList = events ?? "transaction.created";
-  const validEvents = ["transaction.created", "transaction.deleted"];
-  const parsed = eventList.split(",").map((e) => e.trim());
-  if (parsed.some((e) => !validEvents.includes(e))) {
-    return c.json({ error: `Invalid events. Valid: ${validEvents.join(", ")}` }, 400);
-  }
+  const { url, events, secret } = result.data;
 
   const [created] = await db.insert(schema.webhooks).values({
-    userId, url, events: parsed.join(","), secret: secret ?? null,
+    userId, url, events, secret: secret ?? null,
   }).returning();
 
-  logger.info({ webhookId: created.id, url, events: parsed, userId }, "webhook created");
+  logger.info({ webhookId: created.id, url, events, userId }, "webhook created");
 
   const { secret: _, ...safe } = created;
   return c.json({ ...safe, has_secret: !!created.secret }, 201);
@@ -44,9 +37,10 @@ webhooks.post("/", async (c) => {
 
 webhooks.delete("/:id", async (c) => {
   const userId = c.get("userId") as number;
-  const id = parseInt(c.req.param("id"));
-  if (isNaN(id)) return c.json({ error: "Invalid ID" }, 400);
+  const paramResult = idParamSchema.safeParse({ id: c.req.param("id") });
+  if (!paramResult.success) return c.json({ error: "Invalid ID" }, 400);
 
+  const { id } = paramResult.data;
   const [existing] = await db.select({ id: schema.webhooks.id }).from(schema.webhooks)
     .where(and(eq(schema.webhooks.id, id), eq(schema.webhooks.userId, userId)));
   if (!existing) return c.json({ error: "Webhook not found" }, 404);
@@ -58,20 +52,22 @@ webhooks.delete("/:id", async (c) => {
 
 webhooks.patch("/:id", async (c) => {
   const userId = c.get("userId") as number;
-  const id = parseInt(c.req.param("id"));
-  if (isNaN(id)) return c.json({ error: "Invalid ID" }, 400);
+  const paramResult = idParamSchema.safeParse({ id: c.req.param("id") });
+  if (!paramResult.success) return c.json({ error: "Invalid ID" }, 400);
 
+  const { id } = paramResult.data;
   const [existing] = await db.select().from(schema.webhooks)
     .where(and(eq(schema.webhooks.id, id), eq(schema.webhooks.userId, userId)));
   if (!existing) return c.json({ error: "Webhook not found" }, 404);
 
   const body = await c.req.json();
-  const { active } = body as { active?: boolean };
-
-  if (active !== undefined) {
-    await db.update(schema.webhooks).set({ active }).where(eq(schema.webhooks.id, id));
-    logger.info({ webhookId: id, active, userId }, "webhook toggled");
+  const result = updateWebhookSchema.safeParse(body);
+  if (!result.success) {
+    return c.json({ error: result.error.flatten() }, 400);
   }
+
+  await db.update(schema.webhooks).set({ active: result.data.active }).where(eq(schema.webhooks.id, id));
+  logger.info({ webhookId: id, active: result.data.active, userId }, "webhook toggled");
 
   const [updated] = await db.select().from(schema.webhooks).where(eq(schema.webhooks.id, id));
   const { secret: _, ...safe } = updated;

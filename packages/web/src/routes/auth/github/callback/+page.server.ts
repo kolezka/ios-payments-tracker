@@ -20,7 +20,7 @@ export const load: ServerLoad = async ({ url, cookies }) => {
   }
 
   const isSecure = process.env.NODE_ENV === "production";
-  cookies.set("session_token", data.api_token, { path: "/", httpOnly: true, sameSite: "lax", secure: isSecure, maxAge: 60 * 60 * 24 * 365 });
+  cookies.set("session_token", data.api_token, { path: "/", httpOnly: true, sameSite: "lax", secure: isSecure, maxAge: 60 * 60 * 24 * 30 });
   logger.info("GitHub OAuth successful");
   redirect(303, data.is_new ? "/setup" : "/");
 };
