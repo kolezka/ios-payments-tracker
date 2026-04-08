@@ -20,7 +20,7 @@ webhooks.post("/", async (c) => {
   const body = await c.req.json();
   const result = createWebhookSchema.safeParse(body);
   if (!result.success) {
-    return c.json({ error: result.error.flatten() }, 400);
+    return c.json({ error: "Invalid request parameters" }, 400);
   }
 
   const { url, events, secret } = result.data;
@@ -63,7 +63,7 @@ webhooks.patch("/:id", async (c) => {
   const body = await c.req.json();
   const result = updateWebhookSchema.safeParse(body);
   if (!result.success) {
-    return c.json({ error: result.error.flatten() }, 400);
+    return c.json({ error: "Invalid request parameters" }, 400);
   }
 
   await db.update(schema.webhooks).set({ active: result.data.active }).where(eq(schema.webhooks.id, id));

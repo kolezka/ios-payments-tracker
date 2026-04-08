@@ -42,8 +42,7 @@ transactions.post("/", async (c) => {
   try {
     body = await c.req.json();
   } catch (e) {
-    const raw = await c.req.text();
-    logger.error({ raw, error: String(e) }, "failed to parse JSON body");
+    logger.error({ error: String(e) }, "failed to parse JSON body");
     return c.json({ error: "Invalid JSON body" }, 400);
   }
 
@@ -53,7 +52,7 @@ transactions.post("/", async (c) => {
   const result = createTransactionSchema.safeParse(body);
   if (!result.success) {
     logger.warn({ errors: result.error.flatten() }, "validation failed");
-    return c.json({ error: result.error.flatten() }, 400);
+    return c.json({ error: "Invalid request parameters" }, 400);
   }
 
   const { amount, seller, card, title } = result.data;
@@ -90,7 +89,9 @@ transactions.get("/stats", async (c) => {
   const encKey = user.encryptionKey!;
 
   const result = statsQuerySchema.safeParse(c.req.query());
-  if (!result.success) return c.json({ error: result.error.flatten() }, 400);
+  if (!result.success) {
+    return c.json({ error: "Invalid request parameters" }, 400);
+  }
 
   const { from, to } = result.data;
   logger.debug({ from, to, userId }, "stats request");
@@ -161,7 +162,7 @@ transactions.get("/", async (c) => {
 
   const result = listTransactionsSchema.safeParse(c.req.query());
   if (!result.success) {
-    return c.json({ error: result.error.flatten() }, 400);
+    return c.json({ error: "Invalid request parameters" }, 400);
   }
 
   const { limit, offset, from, to } = result.data;

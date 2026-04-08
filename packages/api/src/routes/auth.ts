@@ -13,7 +13,7 @@ auth.post("/magic-link", async (c) => {
   const body = await c.req.json();
   const result = magicLinkSchema.safeParse(body);
   if (!result.success) {
-    return c.json({ error: result.error.flatten() }, 400);
+    return c.json({ error: "Invalid request parameters" }, 400);
   }
 
   const { email } = result.data;
@@ -161,7 +161,7 @@ auth.patch("/me", async (c) => {
   const body = await c.req.json();
   const result = updateNameSchema.safeParse(body);
   if (!result.success) {
-    return c.json({ error: result.error.flatten() }, 400);
+    return c.json({ error: "Invalid request parameters" }, 400);
   }
 
   await db.update(schema.users).set({ name: result.data.name }).where(eq(schema.users.id, user.id));
